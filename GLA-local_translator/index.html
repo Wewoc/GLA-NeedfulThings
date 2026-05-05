@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLA - LocalTranslate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Horn -->
+      <polygon points="14,1 16,9 12,9" fill="#e879f9" opacity="0.9"/>
+      <line x1="14" y1="1" x2="14" y2="9" stroke="#f0abfc" stroke-width="0.5"/>
+      <!-- Head -->
+      <ellipse cx="14" cy="12" rx="5.5" ry="4.5" fill="#e2c9f5"/>
+      <!-- Muzzle -->
+      <ellipse cx="17" cy="14" rx="2.5" ry="2" fill="#f3e0ff"/>
+      <!-- Eye -->
+      <circle cx="12.5" cy="11" r="1" fill="#4c1d95"/>
+      <circle cx="12.8" cy="10.7" r="0.3" fill="white"/>
+      <!-- Ear -->
+      <polygon points="10,8 9,5 12,7.5" fill="#e2c9f5"/>
+      <polygon points="10.2,7.8 9.5,6 11.5,7.5" fill="#e879f9" opacity="0.6"/>
+      <!-- Mane flowing -->
+      <path d="M9 10 Q5 13 6 18 Q7 22 10 24" stroke="#a855f7" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+      <path d="M9 11 Q4 15 5.5 20 Q7 23 11 25" stroke="#818cf8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <path d="M10 9.5 Q7 12 8 17 Q9 21 12 23" stroke="#c084fc" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.5"/>
+      <!-- Stars in mane -->
+      <circle cx="6" cy="16" r="0.8" fill="white" opacity="0.9"/>
+      <circle cx="7" cy="20" r="0.5" fill="white" opacity="0.7"/>
+      <circle cx="5" cy="18" r="0.4" fill="#e879f9" opacity="0.9"/>
+    </svg>
+    GLA - Local<span>Translate</span>
+  </div>
+
+  <div class="controls">
+    <div class="lang-row">
+      <span class="lang-label">From</span>
+      <select id="srcLang"></select>
+    </div>
+    <button class="swap-btn" onclick="swapLangs()" title="Swap languages">⇄</button>
+    <div class="lang-row">
+      <span class="lang-label">To</span>
+      <select id="tgtLang"></select>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="lang-row">
+      <span class="mode-label">Mode</span>
+      <select id="modeSelect">
+        <option value="debounce">Automatic (Pause)</option>
+        <option value="sentence">Sentence (Enter)</option>
+        <option value="manual">Manual (Button)</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<div class="statusbar">
+  <span><span class="dot" id="ollamaDot"></span><span id="ollamaStatus">Ollama …</span></span>
+  <select id="modelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" onchange="setModel(this.value)">
+    <option value="">Modell ...</option>
+  </select>
+  <span id="deeplStatus"></span>
+  <span id="libreStatus" style="display:none;">
+    <span class="dot" id="libreDot"></span>
+    <span id="libreStatusText">LibreTranslate</span>
+    <button onclick="stopLibre()" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;background:none;border:1px solid var(--border);color:var(--warn);border-radius:4px;padding:1px 7px;cursor:pointer;margin-left:4px;" title="Stop LibreTranslate container">■ Stop</button>
+  </span>
+  <a href="https://github.com/Wewoc/Garmin_Local_Archive" target="_blank" id="glaLink" style="margin-left:auto;color:var(--muted);text-decoration:none;font-size:0.72rem;letter-spacing:0.05em;transition:color 0.15s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">⬡ Garmin-Local-Archive</a>
+</div>
+
+<main>
+  <div class="pane">
+    <div class="pane-header">
+      <span class="pane-title">Input</span>
+      <span class="char-count" id="srcCount">0 chars</span>
+    </div>
+    <textarea id="srcText" placeholder="Enter text here …"></textarea>
+  </div>
+
+  <div class="pane">
+    <div class="pane-header">
+      <span class="pane-title">Translation</span>
+      <span id="engineBadge" style="font-size:0.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:6px;"></span>
+      <span class="char-count" id="tgtCount">0 chars</span>
+    </div>
+    <div class="output-area" id="tgtOutput">
+      <span class="placeholder-text">Translation appears here …</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <button class="btn btn-clear" onclick="clearAll()">✕ Clear</button>
+  <button class="btn" id="translateBtn" onclick="translateNow()">▶ Translate</button>
+  <button class="btn btn-deepl"    id="deeplBtn"    onclick="deeplFinal()"    disabled title="Finalen Text über DeepL übersetzen">★ DeepL</button>
+  <button class="btn btn-libre"    id="libreBtn"    onclick="libreFinal()"    disabled title="Finalen Text über LibreTranslate übersetzen">★ LibreTranslate</button>
+  <button class="btn btn-mymemory" id="mymemoryBtn" onclick="mymemoryFinal()" disabled title="Finalen Text über MyMemory übersetzen">★ MyMemory - max. 500 characters</button>
+  <button class="btn btn-lara"     id="laraBtn"     onclick="laraFinal()"     disabled title="Finalen Text über Lara übersetzen">★ Lara</button>
+  <div class="spacer"></div>
+  <button class="btn" onclick="copyTranslation()" title="Übersetzung in Zwischenablage kopieren">⎘ Copy</button>
+  <button class="btn btn-accent" onclick="exportMD()">↓ Export as .md</button>
+  <button class="btn" onclick="openExportDir()" title="Open exports folder">⬡ Open Folder</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
