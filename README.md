@@ -50,7 +50,7 @@ Generated specialists are not production-ready — exploration only.
 
 ---
 
-## translator - maybe funny
+## GLA - local translator - maybe funny
 
 Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
 Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files.
