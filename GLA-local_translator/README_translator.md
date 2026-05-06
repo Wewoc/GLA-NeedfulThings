@@ -179,19 +179,29 @@ prose with deliberate style and tone.
 
 ### Results — DE → EN, literary-technical prose (8 engines tested)
 
-| Rank | Engine | Score | Notes |
-|------|--------|-------|-------|
-| 1 | Claude.ai  | 96 / 100 | Publication-ready. Preserves rhythm and tone. |
-| 2 | Ollama — Dolphin 3 | 88 / 100 | Best local result. Closest to Claude in feel. |
-| 3 | Ollama — Mistral Nemo | 85 / 100 | Clean and accurate. Slightly more formal than the original. |
-| 4 | Ollama — Mistral latest | 83 / 100 | Solid. Occasional quote formatting inconsistency. |
-| 5 | Ollama — qwen2.5-coder:14b-instruct-q8_0 | 81 / 100 | Precise on technical terms. Narrative flow is flatter. |
-| 6 | Ollama — deepseek-r1:14b  | 80 / 100 | Content intact. Sentence rhythm partly lost. |
-| 7 | Ollama — Llama 3.2 | 68 / 100 | Meta-comments in output, one paragraph detached. Needs cleanup. |
-| 8 | LibreTranslate | 48 / 100 | Word-level errors, broken gender references, rhythm gone. |
+| Rank   | Engine                          | Score        | Tone  | Formatting | Error Rate | Notes                                                             |
+| ------ | ------------------------------- | ------------ | ----- | ---------- | ---------- | ----------------------------------------------------------------- |
+| **1**  | **Claude.ai**                   | **96 / 100** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐      | ⭐          | Publication-ready. Matches original voice, structure, and rhythm. |
+| **2**  | **Ollama — TranslateGemma-12B** | **92 / 100** | ⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐      | ⭐⭐         | Best local model. Slightly smoother than original, very stable.   |
+| **3**  | **Ollama — Aya Expanse**        | **89 / 100** | ⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐      | ⭐⭐         | Strong narrative flow, minor interpretive drift.                  |
+| **4**  | **Ollama — Mistral (latest)**   | **85 / 100** | ⭐⭐⭐   | ⭐⭐⭐⭐       | ⭐⭐⭐        | Reliable, but stylistically flatter and more generic.             |
+| **5**  | **Ollama — DeepSeek-R1 14B**    | **83 / 100** | ⭐⭐⭐   | ⭐⭐⭐⭐       | ⭐⭐⭐        | Content accurate, rhythm slightly mechanical.                     |
+| **6**  | **Ollama — Dolphin 3**          | **82 / 100** | ⭐⭐⭐   | ⭐⭐⭐⭐       | ⭐⭐⭐        | Generally good, but inconsistent phrasing and tone.               |
+| **7**  | **Ollama — Mistral Nemo**       | **78 / 100** | ⭐⭐    | ⭐⭐⭐⭐       | ⭐⭐⭐⭐       | Grammatically solid, but stiff and less natural tone.             |
+| **8**  | **Ollama — Qwen2.5-Coder 14B**  | **77 / 100** | ⭐⭐    | ⭐⭐⭐⭐⭐      | ⭐⭐⭐        | Structurally clean, but narratively dry and technical.            |
+| **9**  | **Ollama — Llama 3.2**          | **68 / 100** | ⭐⭐    | ⭐⭐⭐        | ⭐⭐⭐⭐       | Noticeable phrasing issues and minor structural inconsistencies.  |
+| **10** | **LibreTranslate**              | **48 / 100** | ⭐     | ⭐⭐         | ⭐⭐⭐⭐⭐      | Frequent wording errors, tone lost, formatting unstable.          |
 
-Test text: a German essay with short declarative sentences and deliberate pauses.
-Results will differ for other text types — LibreTranslate performs better on short, standardised content.
+---
+
+### Rating Criteria (for clarity)
+
+* **Tone** → How well the model preserves the original voice (reflective, direct, non-hyped)
+* **Formatting** → Structural integrity (Markdown, emphasis, code blocks)
+* **Error Rate** → Linguistic + semantic errors (lower = better)
+
+Test text: a German engineering narrative (technical + reflective) with restrained tone, implicit meaning, and structured pacing.
+Results vary by text type — simpler, standardised content (e.g. UI text or documentation) is significantly easier for most models.
 
 ---
 
