@@ -203,6 +203,8 @@ prose with deliberate style and tone.
 Test text: a German engineering narrative (technical + reflective) with restrained tone, implicit meaning, and structured pacing.
 Results vary by text type — simpler, standardised content (e.g. UI text or documentation) is significantly easier for most models.
 
+Local models like TranslateGemma-12B trade a small amount of linguistic precision for full control, scalability, and near-zero marginal cost — advantages that become significant at larger volumes.
+
 ---
 
 ### Recommendations by use case
