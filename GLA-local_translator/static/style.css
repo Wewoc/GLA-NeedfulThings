@@ -314,3 +314,47 @@ footer {
 }
 .toast.ok  { border-color: var(--accent); color: var(--accent); }
 .toast.err { border-color: var(--warn);   color: var(--warn); }
+
+/* ── Chunk Table ── */
+.chunk-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.chunk-left {
+  width: 50%;
+  padding: 20px;
+  vertical-align: top;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-bottom: 1px solid #1a1826;
+}
+.chunk-right {
+  width: 50%;
+  padding: 20px;
+  vertical-align: top;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-bottom: 1px solid #1a1826;
+}
+.chunk-placeholder { color: #3a3a42; }
+.badge-pulse {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 0.8s ease-in-out infinite;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.chunk-table tr:last-child .chunk-left,
+.chunk-table tr:last-child .chunk-right { border-bottom: none; }
