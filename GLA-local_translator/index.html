@@ -59,15 +59,33 @@
         <option value="manual">Manual (Button)</option>
       </select>
     </div>
+
+    <div class="sep"></div>
+
+    <div class="lang-row">
+      <span class="mode-label">Mindset</span>
+      <select id="mindsetSelect"></select>
+    </div>
   </div>
 </header>
 
 <div class="statusbar">
   <span><span class="dot" id="ollamaDot"></span><span id="ollamaStatus">Ollama …</span></span>
-  <select id="modelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" onchange="setModel(this.value)">
-    <option value="">Modell ...</option>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);">S1</span>
+  <select id="modelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" onchange="setModel(this.value)" title="Primary translation model">
+    <option value=""></option>
   </select>
-  <span id="deeplStatus"></span>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);">S2</span>
+  <select id="s2ModelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" onchange="updatePipelineGray()" title="Quality/terminology pass (optional)">
+    <option value="">—</option>
+  </select>
+  <span id="vramStatus" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);"></span>
+  <span id="termIndicator"
+        title="Domain-specific terms are translated using a terminology table matched to the active mindset."
+        style="display:flex;align-items:center;gap:4px;cursor:default;">
+    <span class="dot" id="termDot"></span>
+    <span id="termStatus" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);">Term</span>
+  </span>
   <span id="libreStatus" style="display:none;">
     <span class="dot" id="libreDot"></span>
     <span id="libreStatusText">LibreTranslate</span>
@@ -99,19 +117,23 @@
 
 <footer>
   <button class="btn btn-clear" onclick="clearAll()">✕ Clear</button>
-  <button class="btn" id="translateBtn" onclick="translateNow()">▶ Translate</button>
-  <button class="btn btn-deepl"    id="deeplBtn"    onclick="deeplFinal()"    disabled title="Finalen Text über DeepL übersetzen">★ DeepL</button>
-  <button class="btn btn-libre"    id="libreBtn"    onclick="libreFinal()"    disabled title="Finalen Text über LibreTranslate übersetzen">★ LibreTranslate</button>
-  <button class="btn btn-mymemory" id="mymemoryBtn" onclick="mymemoryFinal()" disabled title="Finalen Text über MyMemory übersetzen">★ MyMemory - max. 500 characters</button>
-  <button class="btn btn-lara"     id="laraBtn"     onclick="laraFinal()"     disabled title="Finalen Text über Lara übersetzen">★ Lara</button>
+  <button class="btn" id="translateBtn" onclick="handleTranslateBtn()">▶ Translate</button>
+  <button class="btn btn-deepl"    id="deeplBtn"    onclick="deeplFinal()"    disabled title="Final pass via DeepL">★ DeepL</button>
+  <button class="btn btn-libre"    id="libreBtn"    onclick="libreFinal()"    disabled title="Final pass via LibreTranslate">★ LibreTranslate</button>
+  <button class="btn btn-mymemory" id="mymemoryBtn" onclick="mymemoryFinal()" disabled title="Final pass via MyMemory">★ MyMemory - max. 500 characters</button>
+  <button class="btn btn-lara"     id="laraBtn"     onclick="laraFinal()"     disabled title="Final pass via Lara">★ Lara</button>
   <div class="spacer"></div>
-  <button class="btn" onclick="copyTranslation()" title="Übersetzung in Zwischenablage kopieren">⎘ Copy</button>
+  <button class="btn" onclick="copyTranslation()" title="Copy translation to clipboard">⎘ Copy</button>
   <button class="btn btn-accent" onclick="exportMD()">↓ Export as .md</button>
   <button class="btn" onclick="openExportDir()" title="Open exports folder">⬡ Open Folder</button>
 </footer>
 
 <div class="toast" id="toast"></div>
 
+<!-- Script-Reihenfolge: ui → engines → translate → app (State + init zuletzt) -->
+<script src="/static/ui.js"></script>
+<script src="/static/engines.js"></script>
+<script src="/static/translate.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

@@ -4,6 +4,10 @@ Local translation tool — part of the [Garmin Local Archive](https://github.com
 Ollama as primary engine, optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
 Two-column UI in the browser, synchronized scrolling, MD export of both texts.
 Long texts are split into chunks automatically — progress shown live during translation.
+The **▶ Translate** button switches to **■ Stop** during translation — click to abort. Completed chunks are preserved.
+Mindset auto-detection classifies the text on first typing pause and sets the optimal translation profile automatically.
+
+**Multi-LLM Pipeline:** An optional S2 model can be selected in the status bar for a quality/terminology pass after S1. S2 uses the same mindset anchor as S1. Recommended: `qwen2.5:7b`.
 
 ---
 
@@ -64,6 +68,31 @@ Never commit `.env` to Git — it is listed in `.gitignore`.
 The active Ollama model can be changed on the fly via the dropdown in the status bar.
 Available models are loaded automatically from the local Ollama instance.
 The default model is set in `config.yaml` — the dropdown overrides it at runtime without restart.
+
+The status bar also shows live VRAM usage: `VRAM: modelname (8.1 / 16 GB)` when a model is loaded, `GPU idle / 16 GB` when nothing is active. GPU total requires `nvidia-smi` — if unavailable, only the used VRAM is shown. Updates every 10 seconds.
+
+The **Term** indicator shows whether the terminology engine is active for the current language pair and mindset: `● Term DE→EN` (active) or `○ Term DE→EN (n/a)` (no terminology list available for this combination — translation runs without term protection). Tooltip: *Domain-specific terms are translated using a terminology table matched to the active mindset.*
+
+---
+
+## Mindsets
+
+Mindsets control the translation prompt — anchor, tone, style rules, and veto list per domain.
+
+| Mindset | Use case |
+|---|---|
+| **General** | Everyday documents, mixed content |
+| **Technical** | IT, software, RFC, engineering specs |
+| **Legal** | Contracts, regulatory documents, official correspondence |
+| **Medical** | Clinical texts, research papers, patient documentation |
+| **Editorial** | Journalism, essays, long-form prose |
+| **Academic** | Scholarly publications, literary analysis, scientific writing |
+| **Marketing** | Advertising, social media, product communication |
+| **Political** | Speeches, policy papers, official political communication |
+
+**Auto-detection:** In Automatic mode, the mindset is detected on the first typing pause using text excerpts distributed across the document. The dropdown resets to the default mindset after each translation. Manual override is always possible during the typing phase.
+
+Mindsets are defined in `pipeline/mindsets.json` — add or customize entries there. The `default_mindset` is set in `config.yaml`.
 
 ---
 
@@ -145,6 +174,39 @@ Use the **■ Stop** button in the status bar to stop the Docker container from 
 **↓ Als .md exportieren** saves two files in the `exports/` folder:
 - `translation_de_TIMESTAMP.md` — Source text
 - `translation_en_TIMESTAMP.md` — Translation
+
+---
+
+## Performance Logging
+
+After every Ollama translation, timing data is written to `logs/perf.csv`:
+
+| Field | Description |
+|---|---|
+| `timestamp` | Start time of the chunk |
+| `chunk_index` | Position in the chunk sequence (0-based) |
+| `chunk_size` | Characters in this chunk |
+| `complexity` | `low` < 2000 / `medium` < 4000 / `high` ≥ 4000 chars |
+| `time_s1` | S1 translation time in seconds |
+| `time_s2` | S2 pass time in seconds (0 if disabled) |
+| `model_s1` | Active S1 model |
+| `model_s2` | Active S2 model (empty if disabled) |
+| `terms_protected` | Number of domain-specific terms replaced by the terminology engine in this chunk (0 if engine inactive or no list available for the language pair) |
+
+The file is created automatically. Separator is configurable via `log_csv_separator` in `config.yaml` — default `";"` for Excel on Windows with German regional settings.
+
+---
+
+## Quality Testing
+
+`test/` contains a reproducible test runner for comparing model combinations:
+
+- `test_config.csv` — defines any number of runs: source file, S1 model, S2 model, target language, mindset
+- `test/source/` — source texts (one file per text type, 300–600 chars recommended)
+- `test.bat` — checks server availability, then runs `test.py`
+- Results land in `test/results/` — one MD file per run, including source text, S1 output, S2 output (if configured), and the relevant `perf.csv` rows for that run
+
+Designed to work alongside external model evaluation (Gemini, ChatGPT, etc.) — results are ready to paste into any analysis tool.
 
 ---
 

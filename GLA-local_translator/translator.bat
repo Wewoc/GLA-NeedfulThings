@@ -82,6 +82,23 @@ if not errorlevel 1 (
     echo.
 )
 
+:: Chrome suchen und als bevorzugten Browser setzen
+set CHROME_PATH=
+for %%G in (
+    "%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+    "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+    "%LocalAppData%\Google\Chrome\Application\chrome.exe"
+) do (
+    if exist %%G set CHROME_PATH=%%G
+)
+if defined CHROME_PATH (
+    echo  Chrome gefunden – wird als Browser verwendet.
+    set LOCALTRANSLATE_BROWSER=%CHROME_PATH%
+) else (
+    echo  Chrome nicht gefunden – Standardbrowser wird verwendet.
+)
+echo.
+
 :: Starten
 echo  Starte Server...
 echo.
