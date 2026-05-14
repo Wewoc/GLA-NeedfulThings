@@ -50,11 +50,13 @@ Generated specialists are not production-ready — exploration only.
 
 ---
 
-## GLA - local translator - maybe funny
+## translator - maybe funny
 
 Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
 Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files.
 Active Ollama model can be switched on the fly via the status bar dropdown.
+
+Includes a **terminology engine** — domain-specific terms are protected before translation and restored afterwards using mindset-matched lookup tables built from MicrosoftTermCollection and IATE. The status bar shows whether the engine is active for the current language pair.
 
 **⚠ Constraint:** Designed for iterative translation (paragraph/page level). Long texts are split into chunks automatically (Ollama: 6 000 chars, DeepL: 4 900, MyMemory: 480) with live progress display. Not built for bulk-translating entire books in one pass — local LLM context limits and API quotas still apply.
 
