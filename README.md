@@ -14,7 +14,7 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ---
 
-## chat_pipeline - maybe helpfull
+## chat_pipeline
 
 Sorts, summarizes, and exports Claude chat histories using a local Ollama model.
 Useful for reviewing decisions, generating project narratives, or building context for new sessions.
@@ -23,7 +23,7 @@ Useful for reviewing decisions, generating project narratives, or building conte
 
 ---
 
-## git_analyse - maybe usefull
+## git_analyse
 
 Fetches GitHub traffic data and compares a local folder against a GitHub repo.
 Generates Plotly dashboards and a diff report.
@@ -32,7 +32,7 @@ Generates Plotly dashboards and a diff report.
 
 ---
 
-## quick_dash — experimental
+## quick_dash
 
 Generates throw-away GLA dashboards from an interactive config.
 No Python knowledge required. No Ollama. No changes to GLA itself.
@@ -50,7 +50,7 @@ Generated specialists are not production-ready — exploration only.
 
 ---
 
-## translator - maybe funny
+## translator
 
 Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
 Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files.
@@ -66,7 +66,28 @@ Includes a **terminology engine** — domain-specific terms are protected before
 
 ---
 
-## stuff - maybe obvious
+### `change_script/` — Anchor Applier
+Reads an `anchor_delivery.md` (Claude-delivered ALT/NEU diff) and applies the changes automatically to the target files. Two-pass approach: Pass 1 locates all ALT blocks without writing anything, Pass 2 applies them only if Pass 1 was 100% successful.
+
+→ [Documentation](change_script/README.md)
+
+---
+
+### `scanner/` — Critical Dependency Scanner
+Statically scans a Python project for configurable patterns (regex), classifies matches via a local Ollama model, and produces a Markdown report (`DEPS_CRITICAL.md`). Designed for dependency audits and shadow-copy detection.
+
+→ [Documentation](scanner/README.md)
+
+---
+
+### `build_dep_map/` — Dependency Map Generator
+Builds a complete import map of a Python project via AST analysis. Output: Markdown + CSV + JSON snapshot, optionally with a delta comparison against the previous run.
+
+→ [Documentation](build_dep_map/README.md)
+
+---
+
+## stuff
 
 Small single-purpose scripts that do exactly one thing.
 
