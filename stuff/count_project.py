@@ -9,8 +9,9 @@ from collections import defaultdict
 from datetime import datetime
 
 # --- Konfiguration ---
-ROOT = "."
-OUTPUT = "project_stats.md"
+import sys as _sys
+ROOT   = _sys.argv[1] if len(_sys.argv) > 1 else "."
+OUTPUT = os.path.join(ROOT, "project_stats.md")
 
 EXCLUDE_DIRS = {
     "__pycache__", ".git", "build", "dist",

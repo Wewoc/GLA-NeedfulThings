@@ -14,7 +14,7 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ---
 
-## chat_pipelineF
+## chat_pipeline
 
 Sorts, summarizes, and exports Claude chat histories using a local Ollama model.
 Useful for reviewing decisions, generating project narratives, or building context for new sessions.
@@ -118,6 +118,13 @@ Counts lines, words, and characters in a project tree, grouped by file type. Out
 
 ### count_chats.py
 Counts turns, words, and characters in chat exports, split by user and AI. Supports Claude JSON exports and Claude/Gemini Markdown exports. Output: `chat_stats.md`. Works alongside `chat_pipeline` and `gemini_pipeline`.
+
+### menu/
+Windows Explorer and OneCommander context menu integration for the `stuff/` scripts. Right-click any folder to run the tools directly — no terminal required.
+
+Run `menu/install.bat` once to register the entries. No admin required. Works wherever the repo is placed.
+
+→ See `stuff/menu/README.md`
 
 ---
 

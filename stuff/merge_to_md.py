@@ -1,8 +1,9 @@
 import os
+import sys
 
-SOURCE_DIR  = "."
-OUTPUT_FILE = "summary.md"
-EXCLUDE     = {OUTPUT_FILE, "merge_to_md.py", "struktur.md"}
+SOURCE_DIR  = sys.argv[1] if len(sys.argv) > 1 else "."
+OUTPUT_FILE = os.path.join(SOURCE_DIR, "summary.md")
+EXCLUDE     = {"summary.md", "merge_to_md.py", "struktur.md"}
 
 def merge_files_to_markdown(source_dir, output_file):
     if not os.path.exists(source_dir):
