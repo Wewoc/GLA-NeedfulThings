@@ -1,0 +1,18 @@
+# Exportierte Chat-Daten — persönlicher Content, nicht ins Repo
+gemini_gla_export/
+gemini_sorted/
+chat_summaries_gemini.md
+
+# Fehlschlag-Reports
+failed_*.txt
+
+# Externe Extension — separat klonen von amazingpaddy/ai-chat-exporter
+ai-chat-exporter-main/
+ai-chat-exporter/
+
+# Google Takeout Daten
+Takeout/
+
+# Python
+__pycache__/
+*.py[cod]

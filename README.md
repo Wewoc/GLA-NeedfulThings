@@ -19,7 +19,17 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 Sorts, summarizes, and exports Claude chat histories using a local Ollama model.
 Useful for reviewing decisions, generating project narratives, or building context for new sessions.
 
-→ See `chat_pipeline/README_chat_pipeline.md`
+→ See `chat_pipeline/Claude/README_chat_pipeline.md`
+
+## gemini_pipeline
+
+Exports, sorts, and summarizes Gemini chat histories using Playwright automation and a local Ollama model.
+
+Works alongside `chat_pipeline` — same idea, different source. Connects to a running Chrome instance via CDP, scrolls the Gemini sidebar, and exports matching chats via the [amazingpaddy/ai-chat-exporter](https://github.com/amazingpaddy/ai-chat-exporter) extension. A keyword filter limits exports to relevant chats. Sorted chronologically, then summarized via map-reduce.
+
+No cloud. No API key. Chrome and Ollama run locally.
+
+→ See `gchat_pipeline/Gemini/README.md`
 
 ---
 
