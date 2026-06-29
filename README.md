@@ -14,7 +14,7 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ---
 
-## chat_pipeline
+## chat_pipelineF
 
 Sorts, summarizes, and exports Claude chat histories using a local Ollama model.
 Useful for reviewing decisions, generating project narratives, or building context for new sessions.
@@ -112,6 +112,12 @@ Replaces all values in JSON files with placeholders while keeping the structure 
 
 ### backup_to_onedrive.py
 One-way sync from a local folder to OneDrive. Local is master — copies new and changed files, removes files deleted locally, cleans up empty folders. Dry-run mode included.
+
+### count_project.py
+Counts lines, words, and characters in a project tree, grouped by file type. Output: `project_stats.md`. Drop it into any project root and run — no configuration needed.
+
+### count_chats.py
+Counts turns, words, and characters in chat exports, split by user and AI. Supports Claude JSON exports and Claude/Gemini Markdown exports. Output: `chat_stats.md`. Works alongside `chat_pipeline` and `gemini_pipeline`.
 
 ---
 
