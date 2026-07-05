@@ -9,8 +9,7 @@ echo Generate folder tree -- needfull things
 echo Folder: %TARGET%
 echo.
 
-cd /d "%TARGET%"
-tree /f /a > struktur.md
+tree /f /a "%TARGET%" > "%TARGET%\struktur.md"
 
 echo Done. Output: %TARGET%\struktur.md
 echo.

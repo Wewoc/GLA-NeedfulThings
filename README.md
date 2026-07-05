@@ -42,24 +42,6 @@ Generates Plotly dashboards and a diff report.
 
 ---
 
-## quick_dash
-
-Generates throw-away GLA dashboards from an interactive config.
-No Python knowledge required. No Ollama. No changes to GLA itself.
-
-Double-click `start.bat` — answer a few questions about fields, timeframe, and format — done.
-Output lands directly in `quick_dash/dashboards/`, no GLA GUI needed.
-
-Supports two modes: `overview` (daily summary values) and `intraday` (minute-by-minute series).
-Output formats: HTML, Excel, JSON. GLA path and data path are saved after the first run.
-
-**Constraint:** Requires GLA v1.4+ at a configured local path.
-Generated specialists are not production-ready — exploration only.
-
-→ See `quick_dash/README_quick_dash.md`
-
----
-
 ## translator
 
 Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
