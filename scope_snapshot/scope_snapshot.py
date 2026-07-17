@@ -132,9 +132,12 @@ def _extract_module_functions(tree: ast.Module) -> list[dict]:
 
 def _extract_module_constants(tree: ast.Module) -> list[dict]:
     """
-    Module-level constants: ALL-CAPS name + ast.Constant value.
-    Deliberately conservative (v1): dict/list literals (e.g. QUALITY_RANK) are
-    NOT captured — complex expressions are excluded per the concept.
+    Module-level constants: the ALL-CAPS name filter remains as a noise
+    guard. The value is always unparsed — regardless of node type (dict,
+    call, lambda, alias, etc.). ast.unparse() executes nothing, so it's safe
+    for any node type. The earlier restriction to ast.Constant was
+    unnecessarily conservative (verified against
+    QUALITY_RANK = {...} and QUALITY_LOCK = threading.Lock()).
     """
     out = []
     for node in tree.body:
@@ -142,12 +145,11 @@ def _extract_module_constants(tree: ast.Module) -> list[dict]:
             continue
         for target in node.targets:
             if isinstance(target, ast.Name) and _is_const_name(target.id):
-                if isinstance(node.value, ast.Constant):
-                    try:
-                        val = ast.unparse(node.value)
-                    except Exception:
-                        val = repr(node.value.value)
-                    out.append({"name": target.id, "value": val})
+                try:
+                    val = ast.unparse(node.value)
+                except Exception:
+                    val = "..."
+                out.append({"name": target.id, "value": val})
     return out
 
 def _extract_classes(tree: ast.Module) -> list[dict]:
@@ -250,8 +252,11 @@ def _find_symbol_in_file(target_file: Path, symbol_name: str) -> dict | None:
         if isinstance(node, ast.Assign):
             for t in node.targets:
                 if isinstance(t, ast.Name) and t.id == symbol_name:
+                    # No noise risk like in _extract_module_constants: the
+                    # name is already fixed here (facade re-export or
+                    # referenced import neighbor), so always unparse.
                     try:
-                        val = ast.unparse(node.value) if isinstance(node.value, ast.Constant) else "..."
+                        val = ast.unparse(node.value)
                     except Exception:
                         val = "..."
                     return {"kind": "constant", "value": val}
