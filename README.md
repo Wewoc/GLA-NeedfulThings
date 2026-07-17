@@ -79,6 +79,13 @@ Builds a complete import map of a Python project via AST analysis. Output: Markd
 
 ---
 
+### `scope_snapshot/` — Symbol Scope Snapshot
+Generates a signature-level symbol map (functions, constants, class attributes) for a confirmed set of files — built from the reviewed `relevant` matches of a `scanner/` run. Third pre-session source next to the DEPS report and dependency map, closing the gap between "module is affected" and "what does its interface actually look like".
+
+→ [Documentation](scope_snapshot/README.md)
+
+---
+
 ## stuff
 
 Small single-purpose scripts that do exactly one thing.
