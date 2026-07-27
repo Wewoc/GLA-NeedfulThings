@@ -1,0 +1,10 @@
+# LocalTranslate — Python Dependencies
+# Installiert automatisch via translator.bat / translator.sh
+# Manuell: pip install -r requirements.txt
+
+fastapi
+uvicorn
+httpx
+pyyaml
+python-dotenv
+lara-sdk

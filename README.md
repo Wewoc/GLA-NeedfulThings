@@ -86,6 +86,20 @@ Generates a signature-level symbol map (functions, constants, class attributes) 
 
 ---
 
+### `generate_metrics/` — Doc Metrics Generator
+Reads a fresh test run plus `build_manifest.py` and `version.py`, writes a single generated `docs/METRICS.md` (test counts, module count, version) that other docs can link to instead of restating numbers by hand. Aborts without writing on any red or unreadable test result — never overwrites a good file with a stale one.
+
+→ [Documentation](generate_metrics/README.md)
+
+---
+
+### `doc_guard/` — Doc Drift Guard
+Read-only cross-check between code and docs: `build_manifest.py` signatures against real source, module mentions in `REFERENCE_*.md`/`README.md`, and test counts in `MAINTENANCE_*.md` against `docs/METRICS.md`. Writes a report, never touches the checked files. Companion to `generate_metrics/` — same session, same problem, opposite direction (generate vs. verify).
+
+→ [Documentation](doc_guard/README.md)
+
+---
+
 ## stuff
 
 Small single-purpose scripts that do exactly one thing.
