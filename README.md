@@ -100,6 +100,14 @@ Read-only cross-check between code and docs: `build_manifest.py` signatures agai
 
 ---
 
+### `netz2_diagnostics/` — Silo/Backfill Diagnostic Harness
+Reproduces specific reliability edge cases (silo repair, backfill abort, restore staleness, bulk import) against GLA's real core modules — no mocks of the logic under test, only of the external API boundary. Pure observation, no assertions: each run writes a Markdown report for manual (or LLM-assisted) review. Includes a pre-check that hashes the core modules under test and flags reports as potentially stale if they've changed since.
+
+→ [Documentation](netz2_diagnostics/README.md)
+
+
+---
+
 ## stuff
 
 Small single-purpose scripts that do exactly one thing.
