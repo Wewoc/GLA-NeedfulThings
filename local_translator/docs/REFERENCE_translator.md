@@ -97,6 +97,7 @@ terminology/terminology.py  ← importiert nichts aus diesem Projekt (standalone
 | `default_mode` | str | `debounce` | Startup translation mode: `debounce` / `sentence` / `manual` |
 | `default_mindset` | str | `general` | Startup mindset — reset to this after every translation |
 | `pipeline_s2_model` | str | `""` | S2 quality/terminology pass — empty = disabled (e.g. `qwen2.5:7b`) |
+| `pipeline_mindset_model` | str | `""` | Model for `/mindset/detect` — empty = falls back to `state.active_model` (S1) |
 | `languages` | dict | DE/EN/… | Display name → API code mapping for all dropdowns |
 | `export_dir` | str | `exports` | Output folder for MD exports — auto-created |
 | `filename_prefix` | str | `translation` | Prefix for exported filenames |
@@ -181,6 +182,35 @@ state = RuntimeState()
 
 ---
 
+## Mindset model — request-scoped, not stateful
+
+Anders als S1 (`state.active_model`, serverseitig gehalten) folgt das Mindset-Detection-Modell
+dem S2-Muster: kein State, kein Setter-Endpoint. Das UI-Dropdown `mindsetModelSelect` schickt
+den gewählten Modellnamen bei jedem `/mindset/detect`-Call im Request-Body mit
+(`DetectMindsetRequest.mindset_model`).
+
+Prioritätskette in `engines/ollama.py` → `detect_mindset(text, model)`:
+
+model (Request, aus Dropdown) → MINDSET_MODEL (config.yaml) → state.active_model (S1-Fallback)
+
+
+Grund für Request-scoped statt State: `detect_mindset()` läuft nur einmalig pro Session
+(Debounce-Handler, `if (!mindsetDetected)`), nicht durchgehend wie S1 — ein eigener State hätte
+nur Race-Condition-Risiko gegenüber S1-Modellwechseln eingeführt, ohne Nutzen.
+
+---
+
+## Mindset model — request-scoped, not stateful
+
+Anders als S1 (`state.active_model`, serverseitig gehalten) folgt das Mindset-Detection-Modell
+dem S2-Muster: kein State, kein Setter-Endpoint. Das UI-Dropdown `mindsetModelSelect` schickt
+den gewählten Modellnamen bei jedem `/mindset/detect`-Call im Request-Body mit
+(`DetectMindsetRequest.mindset_model`).
+
+Prioritätskette in `engines/ollama.py` → `detect_mindset(text, model)`:
+
+---
+
 ## Lara daily counter
 
 Tracked locally in `lara_usage.json`:
@@ -233,4 +263,9 @@ Alle sechs State-Variablen leben ausschließlich in `static/app.js`:
 | `currentTranslation` | string | `translate()` (translate.js), `clearAll()` (ui.js) |
 | `isTranslating` | bool | `translate()` (translate.js) |
 | `abortController` | AbortController\|null | `translate()` (translate.js) |
-| `mindsetDetected` | bool | `setupInput()` (app.js), `translate()` (translate.js), `clearAll()` (ui.js) |
+| `mindsetDetected` | bool | `translate()` (translate.js), `clearAll()` (ui.js) — gesetzt auf `true` am Anfang von `translate()`, zurückgesetzt auf `false` im `finally`-Block danach; läuft also bei jedem Übersetzungsdurchlauf neu, nicht mehr pro Tipp-Session |
+
+`setupInput()` (app.js) schreibt `mindsetDetected` **nicht mehr** — Mindset-Detect ist bewusst
+aus dem `input`-Listener entfernt und sitzt stattdessen als erster Schritt in `translate()`
+selbst, damit er einheitlich bei allen drei Trigger-Wegen (Button, Enter, Debounce-Timeout)
+feuert, statt an `mode === 'debounce'` gekoppelt zu sein.

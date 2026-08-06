@@ -89,6 +89,8 @@ AUTO_OPEN_BROWSER = cfg.get("auto_open_browser", True)
 S2_MODEL = cfg.get("pipeline_s2_model", "")
 S3_MODEL = cfg.get("pipeline_s3_model", "")  # removed feature, kept for compat
 
+MINDSET_MODEL = cfg.get("pipeline_mindset_model", "")   # empty = fallback to state.active_model
+
 # ── Verzeichnisse anlegen ─────────────────────────────────────────────────────
 
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)

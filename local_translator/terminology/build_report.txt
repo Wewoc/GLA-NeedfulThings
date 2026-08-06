@@ -1,0 +1,36 @@
+# build_terminology -- Report
+Erstellt:             2026-05-09 18:28:27
+MTC:                  MicrosoftTermCollection\GERMAN.tbx
+IATE:                 IATE_download de-en-csv\IATE_export.csv
+Ollama-Filter:        nein
+IATE_MIN_RELIABILITY: 3
+GENERAL_MIN_DOMAINS:  3
+Code-Format:          hash-basiert (stabil ueber Builds)
+
+## Pipeline
+  Raw:              300158
+  Nach Heuristik:   270892
+  Nach Dedup:       232818
+
+## Mindset-Listen
+  general        2768
+  technical    135811
+  legal         11350
+  medical       14869
+  editorial     23935
+  academic      37468
+  marketing     26204
+  political      9125
+  GESAMT       261530
+
+## Stichprobe technical/de.json (erste 10)
+  §T2bc0b0e3§  "Böswillige URL"-Zuverlässigkeit -> malicious URL reputation
+  §T74525954§  "Freihand in Gleichung"-Assistent -> Ink Math Assistant
+  §T974cd524§  "Gefällt mir"-Markierung -> like
+  §T706e3220§  "Kompatibel mit Windows 10"-Logo -> Windows 10 Compatible logo
+  §T6495badb§  "Kompatibel mit Windows 10"-Logo-Programm -> Windows 10 Compatible Logo Program
+  §Te19466b5§  "need-to-know"-Basis -> need-to-know basis
+  §Tb2a85a6d§  "Pro Benutzer"-Clientzugriffslizenz für Remotedesktopdienste -> Remote Desktop Services Per User client access license
+  §T8e89ceca§  "Pro Benutzer"-RDS-CAL -> Remote Desktop Services Per User client access license
+  §Td17f826c§  "Pro Gerät"-Clientzugriffslizenz für Remotedesktopdienste -> Remote Desktop Services Per Device client access license
+  §T39352c4b§  "Pro Gerät"-RDS-CAL -> Remote Desktop Services Per Device client access license

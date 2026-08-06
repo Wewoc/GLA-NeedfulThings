@@ -101,27 +101,17 @@ function setupInput() {
     ta.scrollTop = ratio * (ta.scrollHeight - ta.clientHeight);
   });
 
-  // Debounce-Modus + Mindset-Auto-Erkennung
+  // Übersetzung im Debounce-Modus. Mindset-Detect passiert NICHT hier mehr
+  // (siehe translate.js) - es soll erst laufen, wenn eine Übersetzung
+  // tatsächlich startet, egal über welchen Trigger (Button/Enter/Debounce),
+  // nicht bei jedem einzelnen Tastendruck unabhängig vom gewählten Modus.
   ta.addEventListener('input', () => {
     updateCharCount('srcText', 'srcCount');
+
     const mode = document.getElementById('modeSelect').value;
     if (mode === 'debounce') {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(async () => {
-        if (!mindsetDetected) {
-          try {
-            const text = document.getElementById('srcText').value.trim();
-            const res  = await fetch('/mindset/detect', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ text })
-            });
-            const data = await res.json();
-            const sel  = document.getElementById('mindsetSelect');
-            if (data.mindset && sel) sel.value = data.mindset;
-            mindsetDetected = true;
-          } catch {}
-        }
+      debounceTimer = setTimeout(() => {
         translateNow();
       }, (config.debounce_seconds || 1.5) * 1000);
     }

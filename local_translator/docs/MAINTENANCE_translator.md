@@ -349,6 +349,47 @@ Kein `global` keyword mehr nötig.
 
 ---
 
+## Mindset detection model — why it's NOT in RuntimeState
+
+`detect_mindset()` originally reused `state.active_model` — the S1 translation model —
+for classification. This is very likely the root cause of the observed unreliability
+(near-constant fallback to `"general"`): a model trained for translation, not for
+returning a single category word from a fixed list.
+
+**Fix:** dedicated model, but deliberately **not** added to `RuntimeState`. Followed the
+S2 pattern instead (request-scoped, sent with each fetch) rather than the S1 pattern
+(stateful, `/ollama/set_model`):
+
+```python
+# engines/ollama.py
+async def detect_mindset(text: str, model: str = "") -> str:
+    detect_model = model or MINDSET_MODEL or state.active_model
+```
+
+Priority: UI dropdown (`mindsetModelSelect`, sent as `mindset_model` in the request body)
+→ `config.yaml` (`pipeline_mindset_model`) → S1 fallback (old behavior, unchanged if
+nothing is configured).
+
+**Why not stateful like S1:** `detect_mindset()` fires once per input session (guarded by
+`if (!mindsetDetected)` in `app.js`), not continuously like S1 during the chunk loop. A
+`state.mindset_model` field would have added a second piece of mutable server state with
+no corresponding UI need for persistence across requests — pure race-condition surface
+against S1 model switches, no benefit. The S2 model has the same usage shape and already
+proved the request-scoped approach works fine here.
+
+**No breaking change:** default `pipeline_mindset_model` is `""` — behavior is bit-for-bit
+identical to before until someone sets the config key or picks a model in the dropdown.
+
+**Test data:** no test texts existed for classification quality before this — `test/source/`
+only had translation-quality benchmarks (NTREX-128, news domain only, no domain variety).
+Added `mindset_test_*.md` (one per mindset) for before/after comparison. Real multi-domain
+corpora (e.g. the Aharoni & Goldberg 2020 DE-EN Medical/Law/IT/Koran/Subtitles set) exist
+but are hosted on Google Drive / OPUS — unreachable from this project's sandboxed network,
+so texts were hand-written instead. Fine for register/purpose classification testing, not
+meant to substitute for a real translation-quality benchmark.
+
+---
+
 ## Pfade — PROJECT_ROOT
 
 Alle Pfade in `core/config.py` basieren auf `PROJECT_ROOT`:

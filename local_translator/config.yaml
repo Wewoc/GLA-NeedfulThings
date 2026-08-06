@@ -36,6 +36,7 @@ default_mindset: "general"       # startup mindset: general | technical | legal 
 
 # Multi-LLM Pipeline (optional)
 pipeline_s2_model: ""            # quality/terminology pass — empty = disabled (e.g. "qwen2.5:7b")
+pipeline_mindset_model: ""       # mindset detection — empty = falls back to active S1 model (e.g. "phi4-mini:latest")
 
 # Unterstützte Sprachen (Anzeigename: API-Code)
 languages:

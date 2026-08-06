@@ -49,6 +49,7 @@ from core.config import (
     LARA_SECRET,
     LIBRE_ON,
     LIBRE_URL,
+    MINDSET_MODEL,
     MINDSETS,
     MYMEMORY_ON,
     OLLAMA_CHUNK_SIZE,
@@ -121,6 +122,7 @@ class PrepareRequest(BaseModel):
 
 class DetectMindsetRequest(BaseModel):
     text: str
+    mindset_model: str = ""
 
 class SetModelRequest(BaseModel):
     model: str
@@ -140,6 +142,7 @@ async def get_config():
         "mymemory_available":      MYMEMORY_ON,
         "lara_available":          LARA_ON and bool(LARA_ID) and bool(LARA_SECRET),
         "ollama_model":            state.active_model,
+        "mindset_model":           MINDSET_MODEL,
         "default_mindset":         DEFAULT_MINDSET,
         "mindsets":                {k: v.get("label", k) for k, v in MINDSETS.items()},
     }
@@ -341,7 +344,7 @@ async def set_model(req: SetModelRequest):
 
 @app.post("/mindset/detect")
 async def detect_mindset_endpoint(req: DetectMindsetRequest):
-    mindset = await detect_mindset(req.text.strip())
+    mindset = await detect_mindset(req.text.strip(), req.mindset_model)
     return {"mindset": mindset}
 
 # ── Endpoints — Lara ──────────────────────────────────────────────────────────

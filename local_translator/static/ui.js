@@ -21,6 +21,8 @@ function clearAll() {
   document.getElementById('engineBadge').textContent = '';
   currentTranslation = '';
   mindsetDetected = false;
+  const aiLabel = document.getElementById('mindsetAiLabel');
+  if (aiLabel) aiLabel.textContent = '';
   ['srcCount', 'tgtCount'].forEach(id =>
     document.getElementById(id).textContent = '0 chars');
 }

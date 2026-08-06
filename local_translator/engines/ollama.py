@@ -21,7 +21,7 @@ import re
 import httpx
 from fastapi import HTTPException
 
-from core.config import MINDSETS, OLLAMA_URL, state
+from core.config import MINDSET_MODEL, MINDSETS, OLLAMA_URL, state
 from core.chunking import lang_name
 from core.logging import _write_perf_log
 from terminology.terminology import term_engine
@@ -142,10 +142,16 @@ async def run_s2(text: str, s2_model: str, mindset: str = "general") -> str:
 
 # ── Mindset-Erkennung ─────────────────────────────────────────────────────────
 
-async def detect_mindset(text: str) -> str:
-    """Klassifiziert Text per Ollama-Call. Gibt Mindset-Key zurück, Fallback 'general'."""
+async def detect_mindset(text: str, model: str = "") -> str:
+    """Klassifiziert Text per Ollama-Call. Gibt Mindset-Key zurück, Fallback 'general'.
+
+    Modell-Priorität: explizit übergeben (Frontend-Dropdown) → config.yaml
+    pipeline_mindset_model → state.active_model (S1, alter Default-Ansatz).
+    """
     if not text:
         return "general"
+
+    detect_model = model or MINDSET_MODEL or state.active_model
 
     length = len(text)
     if length < 6000:
@@ -177,7 +183,12 @@ async def detect_mindset(text: str) -> str:
         "Reply with only the category name, nothing else.\n\n"
         f"{excerpts}"
     )
-    payload = {"model": state.active_model, "prompt": prompt, "stream": False}
+    payload = {
+        "model": detect_model,
+        "prompt": prompt,
+        "stream": False,
+        "options": {"temperature": 0},
+    }
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, read=30.0)) as client:
         try:

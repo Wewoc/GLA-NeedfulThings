@@ -65,6 +65,7 @@
     <div class="lang-row">
       <span class="mode-label">Mindset</span>
       <select id="mindsetSelect"></select>
+      <span id="mindsetAiLabel" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);margin-left:6px;"></span>
     </div>
   </div>
 </header>
@@ -78,6 +79,10 @@
   <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);">S2</span>
   <select id="s2ModelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" onchange="updatePipelineGray()" title="Quality/terminology pass (optional)">
     <option value="">—</option>
+  </select>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);">Mindset AI</span>
+  <select id="mindsetModelSelect" style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:2px 8px;cursor:pointer;" title="Model used for auto mindset detection (empty = uses S1 model)">
+    <option value="">— uses S1 —</option>
   </select>
   <span id="vramStatus" style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);"></span>
   <span id="termIndicator"

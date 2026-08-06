@@ -30,21 +30,25 @@ async function checkOllama() {
       });
       if (!sel.value && s.models.length) sel.value = s.models[0];
 
-      // S2-Dropdown mit derselben Modellliste befüllen
-      ['s2ModelSelect'].forEach(id => {
-        const s2sel = document.getElementById(id);
-        const prev  = s2sel.value;
-        s2sel.innerHTML = '<option value="">— disabled —</option>';
+      // S2- und Mindset-Dropdown mit derselben Modellliste befüllen
+      ['s2ModelSelect', 'mindsetModelSelect'].forEach(id => {
+        const sel  = document.getElementById(id);
+        const prev = sel.value;
+        sel.innerHTML = id === 's2ModelSelect'
+          ? '<option value="">— disabled —</option>'
+          : '<option value="">— uses S1 —</option>';
         s.models.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m;
           opt.textContent = m;
-          s2sel.appendChild(opt);
+          sel.appendChild(opt);
         });
-        if (prev) s2sel.value = prev;
+        if (prev) sel.value = prev;
       });
       if (config.pipeline_s2_model && !document.getElementById('s2ModelSelect').value)
         document.getElementById('s2ModelSelect').value = config.pipeline_s2_model;
+      if (config.mindset_model && !document.getElementById('mindsetModelSelect').value)
+        document.getElementById('mindsetModelSelect').value = config.mindset_model;
       updatePipelineGray();
 
     } else {

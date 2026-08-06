@@ -23,6 +23,32 @@ async function translate(engine = 'ollama') {
   const tgt = document.getElementById('tgtLang').value;
   if (src === tgt) { showToast('Source and target language are identical', 'err'); return; }
 
+  // Mindset-Detect — erster Schritt, sobald eine Übersetzung tatsächlich
+  // startet (egal ob per Button, Enter oder Debounce-Timeout ausgelöst).
+  // Läuft nur einmal pro Übersetzungslauf (mindsetDetected-Flag), Reset
+  // passiert im finally-Block unten nach Abschluss.
+  if (!mindsetDetected) {
+    try {
+      const mindsetModel = document.getElementById('mindsetModelSelect')?.value || '';
+      const res  = await fetch('/mindset/detect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, mindset_model: mindsetModel })
+      });
+      const data = await res.json();
+      const sel  = document.getElementById('mindsetSelect');
+      if (data.mindset && sel) {
+        sel.value = data.mindset;
+        const aiLabel = document.getElementById('mindsetAiLabel');
+        if (aiLabel) aiLabel.textContent = `AI: ${data.mindset}`;
+      }
+    } catch {
+      // Mindset-Detect ist ein "Nice-to-have" - schlägt es fehl, läuft die
+      // Übersetzung trotzdem mit dem aktuell gewählten Mindset weiter.
+    }
+    mindsetDetected = true;
+  }
+
   const limit        = CHUNK_LIMITS[engine];
   const needsChunking = limit && text.length > limit;
 
@@ -154,6 +180,8 @@ async function translate(engine = 'ollama') {
     const mindsetSel     = document.getElementById('mindsetSelect');
     mindsetSel.disabled  = false;
     mindsetSel.value     = config.default_mindset || 'general';
+    // AI-Label bleibt stehen — wird erst bei clearAll() oder der nächsten
+    // erfolgreichen Detection (translate(), Anfang) überschrieben.
 
     if (engine === 'ollama') {
       fetch('/ollama/unload', { method: 'POST' })
