@@ -15,6 +15,7 @@ Consult alongside `README_translator.md` and `MAINTENANCE_translator.md`.
 | `core/config.py` | Konfiguration, Konstanten, RuntimeState, Mindsets | einziger Ort für cfg-Zugriff und state |
 | `core/chunking.py` | `split_chunks()`, `lang_name()`, `LANG_NAMES` | reine Text-/Sprach-Helfer, kein IO |
 | `core/logging.py` | `perf.csv`, `lara_usage.json` | ausschließlich Logging und Zähler |
+| `core/link_guard.py` | `protect()`, `restore()` — URL/Pfad/Markdown-Link-Schutz vor der Übersetzungspipeline | eigener Placeholder-Namespace `§Lxxxxxxxx§`, unabhängig von TermEngine |
 | `engines/ollama.py` | `translate_ollama()`, `run_s2()`, `detect_mindset()`, `write_chunk_perf_log()` | alles was Ollama direkt aufruft |
 | `engines/external.py` | `translate_deepl()`, `translate_libretranslate()`, `translate_mymemory()`, `translate_lara()` | alle externen API-Engines |
 
@@ -61,16 +62,17 @@ core/config.py          ← Basis, importiert niemanden aus diesem Projekt
     ↑
 core/chunking.py        ← importiert core.config
 core/logging.py         ← importiert core.config
+core/link_guard.py      ← importiert nichts aus diesem Projekt (standalone, nur stdlib)
     ↑
 engines/ollama.py       ← importiert core.config, core.chunking, core.logging, terminology.terminology
 engines/external.py     ← importiert core.config, core.logging
     ↑
-app.py                  ← importiert alle obigen + terminology.terminology
+app.py                  ← importiert alle obigen + core.link_guard + terminology.terminology
     ↑
 terminology/terminology.py  ← importiert nichts aus diesem Projekt (standalone)
 ```
 
-`core/config.py` darf niemals etwas aus `core/logging.py`, `core/chunking.py` oder den Engines importieren — das würde einen Circular Import erzeugen.
+`core/config.py` darf niemals etwas aus `core/logging.py`, `core/chunking.py`, `core/link_guard.py` oder den Engines importieren — das würde einen Circular Import erzeugen.
 
 ---
 
@@ -188,6 +190,35 @@ Tracked locally in `lara_usage.json`:
 Resets automatically at midnight (date check on every read).
 Written by `add_lara_usage()` in `core/logging.py` after every successful Lara translation.
 The UI button shows remaining chars and disables itself at limit.
+
+---
+
+## Link/path protection — link_guard.py
+
+`core/link_guard.py` protects URLs, markdown links, and file paths from being altered by
+the translation pipeline (S1 could otherwise spell out protocol prefixes like `https://`,
+or mangle path separators).
+
+```python
+from core import link_guard
+
+link_result = link_guard.protect(text)      # -> LinkGuardResult(protected_text, mapping)
+restored     = link_guard.restore(text, link_result.mapping)
+```
+
+Placeholder format: `§Lxxxxxxxx§` (8-digit numeric ID) — independent namespace from
+TermEngine's `§Txxxxxxxx§`, no collision risk.
+
+**Detected patterns** (in this order): markdown links `[text](url)`, bare URLs, Windows/UNC
+paths, backtick-quoted codespans containing a path separator (`` `src/docs/x.md` ``).
+Anchor-text heuristic decides whether markdown link text itself is protected (filename-like)
+or left translatable (prose).
+
+**Pipeline position:** wraps *outside* TermEngine, spanning the whole S1+S2 pipeline — not
+just S1. See `MAINTENANCE_translator.md` for the exact ordering rationale.
+
+Intentionally out of scope: bare prose paths without backticks or markdown syntax (e.g.
+"liegt unter src/docs/") — left untouched, no regex guessing.
 
 ---
 

@@ -61,6 +61,7 @@ from core.config import (
 )
 from core.chunking import lang_name, split_chunks
 from core.logging import get_lara_usage
+from core import link_guard
 from terminology.terminology import term_engine
 from engines.ollama import (
     detect_mindset,
@@ -179,9 +180,12 @@ async def translate_chunk(req: ChunkRequest):
     else:
         import time
 
+        # ── link_guard protect — außen um TermEngine, überlebt S1 + S2 ────────
+        link_result = link_guard.protect(req.text)
+
         # ── protect vor S1 ───────────────────────────────────────────────────
         protected_text, code_map = term_engine.protect(
-            req.text, src_lang=req.source_lang, mindset=req.mindset
+            link_result.protected_text, src_lang=req.source_lang, mindset=req.mindset
         )
 
         t0     = time.monotonic()
@@ -205,6 +209,9 @@ async def translate_chunk(req: ChunkRequest):
             result  = await run_s2(result, req.s2_model, req.mindset)
             time_s2 = time.monotonic() - t1
 
+        # ── link_guard restore — nach S1+S2, ganz am Ende ──────────────────────
+        result = link_guard.restore(result, link_result.mapping)
+
         write_chunk_perf_log(req.chunk_index, len(req.text), time_s1, time_s2, req.s2_model,
                              terms_protected=len(code_map))
 
@@ -226,8 +233,10 @@ async def translate(req: TranslateRequest):
     else:
         import time
 
+        link_result = link_guard.protect(req.text)
+
         protected_text, code_map = term_engine.protect(
-            req.text, src_lang=req.source_lang, mindset="general"
+            link_result.protected_text, src_lang=req.source_lang, mindset="general"
         )
         t0     = time.monotonic()
         result = await translate_ollama(protected_text, req.source_lang, req.target_lang)
@@ -239,6 +248,8 @@ async def translate(req: TranslateRequest):
             t1      = time.monotonic()
             result  = await run_s2(result, req.s2_model, mindset="general")
             time_s2 = time.monotonic() - t1
+
+        result = link_guard.restore(result, link_result.mapping)
 
         write_chunk_perf_log(0, len(req.text), time_s1, time_s2, req.s2_model,
                              terms_protected=len(code_map))

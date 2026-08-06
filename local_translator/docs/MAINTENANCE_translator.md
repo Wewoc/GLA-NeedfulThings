@@ -291,6 +291,34 @@ If a term appears in both the veto list and `de.json`, the term engine fires fir
 
 ---
 
+## link_guard — placeholder restore timing differs from TermEngine
+
+`link_guard.restore()` runs **after S2**, not right after S1 like TermEngine's restore.
+TermEngine restores early so S2 edits clean, readable EN text — but link_guard placeholders
+must survive S2 too, otherwise S2 could reformat or "improve" an already-restored URL or
+path. Keep this ordering if the pipeline is ever refactored:
+
+```
+link_guard.protect() → term_engine.protect() → S1
+  → term_engine.restore() → S2 (optional) → link_guard.restore()
+```
+
+Two independent placeholder namespaces coexist in the protected text during S1/S2:
+`§Lxxxxxxxx§` (link_guard) and `§Txxxxxxxx§` (TermEngine). No collision risk — different
+prefix character, both are 8-digit numeric IDs.
+
+**Applies to both `/translate` and `/translate/chunk`** — same caveat as the S2 silent-skip
+case above: these are separate code paths with no shared helper. When touching pipeline
+order in one, check the other.
+
+**Grey zone, deliberately unhandled:** bare prose paths without backticks or markdown
+syntax (e.g. "liegt unter src/docs/") are not protected — regex-guessing here risked false
+positives on ordinary text like "und/oder". If this turns out to matter in practice, an
+LLM batch-classification pass for the remaining grey zone was discussed as a future option
+— not implemented.
+
+---
+
 ## Quality test runner — test/test.py
 
 `test.py` calls `/translate/chunk` directly — same endpoint as the UI chunking loop. This means term engine, S2 pass, and perf logging all fire exactly as in production.
