@@ -16,6 +16,8 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ## Methodology
 
+## Methodology
+
 The two documents below are not tools — they're the reasoning behind the tools in the next section. Read them if you want to understand *why* the workflow looks the way it does, not just *what* each script does.
 
 ### `METHODOLOGY.md` — Disciplined AI-Delegated Engineering
@@ -27,6 +29,11 @@ The general pattern behind the change-time tooling: how a change moves from prop
 The companion pattern for standing back from any single change and assessing a system as a whole, in a way that stays comparable across repeated runs — evidence-tiered findings, a fixed scoring grid, ID stability over time, and a mitigation hierarchy carried over from CE/Machinery-Directive risk assessment (ISO 12100).
 
 → [Read it](AUDIT_METHODOLOGY.md)
+
+`disciplined-ai-engineering/SKILL.md` — Portable Skill
+A toolchain-agnostic distillation of both documents above into a loadable Claude Skill — the same process (Evaluate ≠ Decide, staged Assess/Analyze/Build, read-before-write, Single Owner, silent-failure lens, diff-vs-full delivery, review gate) without any reference to this repo's specific scripts, so it can be dropped into any project and defers to that project's own stricter instructions where they exist.
+→ [Read it](https://github.com/Wewoc/GLA-NeedfulThings/SKILL.md)
+
 
 ---
 
