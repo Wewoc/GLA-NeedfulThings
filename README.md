@@ -14,49 +14,40 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ---
 
-## chat_pipeline
+## Methodology
 
-Sorts, summarizes, and exports Claude chat histories using a local Ollama model.
-Useful for reviewing decisions, generating project narratives, or building context for new sessions.
+The two documents below are not tools — they're the reasoning behind the tools in the next section. Read them if you want to understand *why* the workflow looks the way it does, not just *what* each script does.
 
-→ See `chat_pipeline/Claude/README_chat_pipeline.md`
+### `METHODOLOGY.md` — Disciplined AI-Delegated Engineering
+The general pattern behind the change-time tooling: how a change moves from proposal to applied code while staying reviewable, reversible, and owned by a human — independent of any single project. [Garmin Local Archive](https://github.com/Wewoc/Garmin_Local_Archive) is the worked example.
 
-## gemini_pipeline
+→ [Read it](METHODOLOGY.md)
 
-Exports, sorts, and summarizes Gemini chat histories using Playwright automation and a local Ollama model.
+### `AUDIT_METHODOLOGY.md` — Structured Periodic Assessment
+The companion pattern for standing back from any single change and assessing a system as a whole, in a way that stays comparable across repeated runs — evidence-tiered findings, a fixed scoring grid, ID stability over time, and a mitigation hierarchy carried over from CE/Machinery-Directive risk assessment (ISO 12100).
 
-Works alongside `chat_pipeline` — same idea, different source. Connects to a running Chrome instance via CDP, scrolls the Gemini sidebar, and exports matching chats via the [amazingpaddy/ai-chat-exporter](https://github.com/amazingpaddy/ai-chat-exporter) extension. A keyword filter limits exports to relevant chats. Sorted chronologically, then summarized via map-reduce.
-
-No cloud. No API key. Chrome and Ollama run locally.
-
-→ See `gchat_pipeline/Gemini/README.md`
+→ [Read it](AUDIT_METHODOLOGY.md)
 
 ---
 
-## git_analyse
+## Change Workflow
 
-Fetches GitHub traffic data and compares a local folder against a GitHub repo.
-Generates Plotly dashboards and a diff report.
+Tools used before and during a build task — from "what does this touch" to "apply the change".
 
-→ See `git_analyse/README_git_analyse.md`
+### `scanner/` — Critical Dependency Scanner
+Statically scans a Python project for configurable patterns (regex), classifies matches via a local Ollama model, and produces a Markdown report (`DEPS_CRITICAL.md`). Designed for dependency audits and shadow-copy detection.
 
----
+→ [Documentation](scanner/README.md)
 
-## translator
+### `scope_snapshot/` — Symbol Scope Snapshot
+Generates a signature-level symbol map (functions, constants, class attributes) for a confirmed set of files — built from the reviewed `relevant` matches of a `scanner/` run. Third pre-session source next to the DEPS report and dependency map, closing the gap between "module is affected" and "what does its interface actually look like".
 
-Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate.
-Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files.
-Active Ollama model can be switched on the fly via the status bar dropdown.
+→ [Documentation](scope_snapshot/README.md)
 
-Includes a **terminology engine** — domain-specific terms are protected before translation and restored afterwards using mindset-matched lookup tables built from MicrosoftTermCollection and IATE. The status bar shows whether the engine is active for the current language pair.
+### `build_dep_map/` — Dependency Map Generator
+Builds a complete import map of a Python project via AST analysis. Output: Markdown + CSV + JSON snapshot, optionally with a delta comparison against the previous run.
 
-**⚠ Constraint:** Designed for iterative translation (paragraph/page level). Long texts are split into chunks automatically (Ollama: 6 000 chars, DeepL: 4 900, MyMemory: 480) with live progress display. Not built for bulk-translating entire books in one pass — local LLM context limits and API quotas still apply.
-
-→ See `translator/README_translator.md`
-
-![🦄 GLA - Local Translator](img/GLA-LocalTranslator.png)
-
----
+→ [Documentation](build_dep_map/README.md)
 
 ### `change_script/` — Anchor Applier
 Reads an `anchor_delivery.md` (Claude-delivered ALT/NEU diff) and applies the changes automatically to the target files. Two-pass approach: Pass 1 locates all ALT blocks without writing anything, Pass 2 applies them only if Pass 1 was 100% successful.
@@ -65,33 +56,14 @@ Reads an `anchor_delivery.md` (Claude-delivered ALT/NEU diff) and applies the ch
 
 ---
 
-### `scanner/` — Critical Dependency Scanner
-Statically scans a Python project for configurable patterns (regex), classifies matches via a local Ollama model, and produces a Markdown report (`DEPS_CRITICAL.md`). Designed for dependency audits and shadow-copy detection.
+## Doc Automation
 
-→ [Documentation](scanner/README.md)
-
----
-
-### `build_dep_map/` — Dependency Map Generator
-Builds a complete import map of a Python project via AST analysis. Output: Markdown + CSV + JSON snapshot, optionally with a delta comparison against the previous run.
-
-→ [Documentation](build_dep_map/README.md)
-
----
-
-### `scope_snapshot/` — Symbol Scope Snapshot
-Generates a signature-level symbol map (functions, constants, class attributes) for a confirmed set of files — built from the reviewed `relevant` matches of a `scanner/` run. Third pre-session source next to the DEPS report and dependency map, closing the gap between "module is affected" and "what does its interface actually look like".
-
-→ [Documentation](scope_snapshot/README.md)
-
----
+Keeps generated documentation honest against the actual code, in both directions.
 
 ### `generate_metrics/` — Doc Metrics Generator
 Reads a fresh test run plus `build_manifest.py` and `version.py`, writes a single generated `docs/METRICS.md` (test counts, module count, version) that other docs can link to instead of restating numbers by hand. Aborts without writing on any red or unreadable test result — never overwrites a good file with a stale one.
 
 → [Documentation](generate_metrics/README.md)
-
----
 
 ### `doc_guard/` — Doc Drift Guard
 Read-only cross-check between code and docs: `build_manifest.py` signatures against real source, module mentions in `REFERENCE_*.md`/`README.md`, and test counts in `MAINTENANCE_*.md` against `docs/METRICS.md`. Writes a report, never touches the checked files. Companion to `generate_metrics/` — same session, same problem, opposite direction (generate vs. verify).
@@ -100,11 +72,46 @@ Read-only cross-check between code and docs: `build_manifest.py` signatures agai
 
 ---
 
+## Diagnostics
+
+Reliability testing against real code, no mocking of the logic under test.
+
 ### `netz2_diagnostics/` — Silo/Backfill Diagnostic Harness
 Reproduces specific reliability edge cases (silo repair, backfill abort, restore staleness, bulk import) against GLA's real core modules — no mocks of the logic under test, only of the external API boundary. Pure observation, no assertions: each run writes a Markdown report for manual (or LLM-assisted) review. Includes a pre-check that hashes the core modules under test and flags reports as potentially stale if they've changed since.
 
 → [Documentation](netz2_diagnostics/README.md)
 
+---
+
+## Ecosystem Tools
+
+Independent apps that were born in the same workshop but have no dependency on GLA itself.
+
+### `chat_pipeline/` — Claude Chat Archiver
+Sorts, summarizes, and exports Claude chat histories using a local Ollama model. Useful for reviewing decisions, generating project narratives, or building context for new sessions.
+
+→ [Documentation](chat_pipeline/Claude/README_chat_pipeline.md)
+
+### `gemini_pipeline/` — Gemini Chat Archiver
+Exports, sorts, and summarizes Gemini chat histories using Playwright automation and a local Ollama model. Works alongside `chat_pipeline` — same idea, different source. Connects to a running Chrome instance via CDP, scrolls the Gemini sidebar, and exports matching chats via the [amazingpaddy/ai-chat-exporter](https://github.com/amazingpaddy/ai-chat-exporter) extension. A keyword filter limits exports to relevant chats. Sorted chronologically, then summarized via map-reduce. No cloud. No API key. Chrome and Ollama run locally.
+
+→ [Documentation](gchat_pipeline/Gemini/README.md) <!-- TODO: path looks like a typo — verify against actual folder name -->
+
+### `git_analyse/` — Repo Traffic & Diff
+Fetches GitHub traffic data and compares a local folder against a GitHub repo. Generates Plotly dashboards and a diff report.
+
+→ [Documentation](git_analyse/README_git_analyse.md)
+
+### `translator/` — Local Translator
+Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate. Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files. Active Ollama model can be switched on the fly via the status bar dropdown.
+
+Includes a **terminology engine** — domain-specific terms are protected before translation and restored afterwards using mindset-matched lookup tables built from MicrosoftTermCollection and IATE. The status bar shows whether the engine is active for the current language pair.
+
+**⚠ Constraint:** Designed for iterative translation (paragraph/page level). Long texts are split into chunks automatically (Ollama: 6 000 chars, DeepL: 4 900, MyMemory: 480) with live progress display. Not built for bulk-translating entire books in one pass — local LLM context limits and API quotas still apply.
+
+→ [Documentation](translator/README_translator.md)
+
+![🦄 GLA - Local Translator](img/GLA-LocalTranslator.png)
 
 ---
 
@@ -112,31 +119,30 @@ Reproduces specific reliability edge cases (silo repair, backfill abort, restore
 
 Small single-purpose scripts that do exactly one thing.
 
-### generate_tree.bat
+### `generate_tree.bat`
 Generates a folder tree of the current directory and writes it to `struktur.md`.
 
-### merge_to_md.py
+### `merge_to_md.py`
 Merges all files in the current directory into a single Markdown file — useful for feeding a codebase to an LLM.
 
-### anonymize_json.py
+### `anonymize_json.py`
 Replaces all values in JSON files with placeholders while keeping the structure intact — useful for sharing Garmin data samples without exposing personal health data.
 
-### backup_to_onedrive.py
+### `backup_to_onedrive.py`
 One-way sync from a local folder to OneDrive. Local is master — copies new and changed files, removes files deleted locally, cleans up empty folders. Dry-run mode included.
 
-### count_project.py
+### `count_project.py`
 Counts lines, words, and characters in a project tree, grouped by file type. Output: `project_stats.md`. Drop it into any project root and run — no configuration needed.
 
-### count_chats.py
+### `count_chats.py`
 Counts turns, words, and characters in chat exports, split by user and AI. Supports Claude JSON exports and Claude/Gemini Markdown exports. Output: `chat_stats.md`. Works alongside `chat_pipeline` and `gemini_pipeline`.
 
-### menu/
-Windows Explorer and OneCommander context menu integration for the `stuff/` scripts. Right-click any folder to run the tools directly — no terminal required.
+### `menu/`
+Windows Explorer and OneCommander context menu integration for the `stuff/` scripts. Right-click any folder to run the tools directly — no terminal required. Run `menu/install.bat` once to register the entries. No admin required. Works wherever the repo is placed.
 
-Run `menu/install.bat` once to register the entries. No admin required. Works wherever the repo is placed.
-
-→ See `stuff/menu/README.md`
+→ [Documentation](stuff/menu/README.md)
 
 ---
 
 *Built with Claude · [☕ buy me a coffee](https://ko-fi.com/wewoc)*
+
