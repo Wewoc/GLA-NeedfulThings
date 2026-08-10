@@ -32,7 +32,8 @@ The companion pattern for standing back from any single change and assessing a s
 
 `disciplined-ai-engineering/SKILL.md` — Portable Skill
 A toolchain-agnostic distillation of both documents above into a loadable Claude Skill — the same process (Evaluate ≠ Decide, staged Assess/Analyze/Build, read-before-write, Single Owner, silent-failure lens, diff-vs-full delivery, review gate) without any reference to this repo's specific scripts, so it can be dropped into any project and defers to that project's own stricter instructions where they exist.
-→ [Read it](https://github.com/Wewoc/GLA-NeedfulThings/blob/main/disciplined-ai-engineering/SKILL.md)
+
+→ [Read it](disciplined-ai-engineering/SKILL.md)
 
 
 ---
