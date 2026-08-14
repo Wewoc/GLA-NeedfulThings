@@ -8,8 +8,3 @@ python-dotenv
 # --- chat_pipeline ---
 # Required for Step 6 (Word .docx export)
 python-docx
-
-# --- translator ---
-# Inferred dependencies for API requests and config.yaml parsing
-requests
-PyYAML

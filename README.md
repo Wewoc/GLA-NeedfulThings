@@ -16,8 +16,6 @@ A collection of needful things — helpful, useful, and sometimes maybe just fun
 
 ## Methodology
 
-## Methodology
-
 The two documents below are not tools — they're the reasoning behind the tools in the next section. Read them if you want to understand *why* the workflow looks the way it does, not just *what* each script does.
 
 ### `METHODOLOGY.md` — Disciplined AI-Delegated Engineering
@@ -32,9 +30,7 @@ The companion pattern for standing back from any single change and assessing a s
 
 `disciplined-ai-engineering/SKILL.md` — Portable Skill
 A toolchain-agnostic distillation of both documents above into a loadable Claude Skill — the same process (Evaluate ≠ Decide, staged Assess/Analyze/Build, read-before-write, Single Owner, silent-failure lens, diff-vs-full delivery, review gate) without any reference to this repo's specific scripts, so it can be dropped into any project and defers to that project's own stricter instructions where they exist.
-
 → [Read it](SKILL.md)
-
 
 ---
 
@@ -110,16 +106,10 @@ Fetches GitHub traffic data and compares a local folder against a GitHub repo. G
 
 → [Documentation](git_analyse/README_git_analyse.md)
 
-### `translator/` — Local Translator
-Local translation tool with Ollama as primary engine and optional Final-Pass via DeepL, LibreTranslate, MyMemory or Lara Translate. Two-column browser UI with synchronized scrolling — translate text and export both source and translation as Markdown files. Active Ollama model can be switched on the fly via the status bar dropdown.
-
-Includes a **terminology engine** — domain-specific terms are protected before translation and restored afterwards using mindset-matched lookup tables built from MicrosoftTermCollection and IATE. The status bar shows whether the engine is active for the current language pair.
-
-**⚠ Constraint:** Designed for iterative translation (paragraph/page level). Long texts are split into chunks automatically (Ollama: 6 000 chars, DeepL: 4 900, MyMemory: 480) with live progress display. Not built for bulk-translating entire books in one pass — local LLM context limits and API quotas still apply.
-
-→ [Documentation](translator/README_translator.md)
-
-![🦄 GLA - Local Translator](img/GLA-LocalTranslator.png)
+### Local Translator & Terminology Engine
+Moved out into their own repo: **[GLA_local-translator](https://github.com/Wewoc/GLA_local-translator)** —
+local translation tool (Ollama primary, optional Final-Pass via DeepL, LibreTranslate, MyMemory or
+Lara Translate) plus the offline terminology-list build pipeline.
 
 ---
 
