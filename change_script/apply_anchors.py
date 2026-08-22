@@ -17,6 +17,20 @@ was bei NEU-Blöcken mit eingebetteten ```python-Codebeispielen zu
 stillschweigend abgeschnittenem Inhalt führte (kein Fehler, kein Hinweis
 — einfach ein zu kurzer Treffer). Ursache + Reproduktion: Session
 v1.6.5.5, Doku-Automatisierung.
+
+v1.6.6-Änderung: Der v1.6.5.5-Fix schützt nur, wenn die äußere Wrapper-
+Fence mehr Backticks hat als jede Fence im Blockinhalt selbst — das
+musste man beim Schreiben der Delivery manuell einhalten und wurde bei
+Doku-Blöcken mit eingebetteten ```-Beispielen regelmäßig übersehen
+(gleiche Symptomatik wie oben: still abgeschnittener oder falsch
+zugeordneter Inhalt, kein Fehler). Neuer, bevorzugter Weg: eindeutige
+Sentinel-Marker <<<ALT>>>/<<<ALT_END>>> und <<<NEU>>>/<<<NEU_END>>>,
+die nie mit Markdown-/Code-Fences im Inhalt kollidieren können, weil
+danach per exaktem String gesucht wird statt nach einer inhaltlich
+passenden Gegen-Fence. Alte, reine Backtick-Fence-Deliveries werden
+weiterhin als Fallback unterstützt (Abwärtskompatibilität) — Marker
+werden zuerst versucht, erst wenn keine da sind, greift die alte
+FENCE-Logik.
 """
 
 from pathlib import Path
@@ -53,6 +67,22 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
     # länger ist (z.B. ````) als jede innere Fence im Inhalt.
     FENCE = re.compile(r"^(`{3,})[^\n]*\n(.*?)^\1[ \t]*$", re.DOTALL | re.MULTILINE)
 
+    # Marker-basierte Extraktion (bevorzugt, siehe v1.6.6-Kommentar oben).
+    # Exakte Sentinel-Zeilen statt Backtick-Zählerei — kollidiert nie mit
+    # verschachtelten Fences im Blockinhalt.
+    ALT_MARKER = re.compile(r"<<<ALT>>>[ \t]*\n(.*?)\n[ \t]*<<<ALT_END>>>", re.DOTALL)
+    NEU_MARKER = re.compile(r"<<<NEU>>>[ \t]*\n(.*?)\n[ \t]*<<<NEU_END>>>", re.DOTALL)
+
+    def extract_block(section_text, marker_re):
+        """Blockinhalt holen — zuerst per Sentinel-Marker, sonst Fence-Fallback."""
+        m = marker_re.search(section_text)
+        if m:
+            return m.group(1)
+        m = FENCE.search(section_text)
+        if m:
+            return m.group(2)
+        return None
+
     anchors = []
     errors  = []
 
@@ -79,11 +109,10 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
         for alt_pos, neu_pos in zip(alt_positions, neu_positions):
             # ALT-Block extrahieren
             alt_section = body[alt_pos:neu_pos]
-            alt_match   = FENCE.search(alt_section)
-            if not alt_match:
-                errors.append(f"  ✗  {file_path} — ALT-Block ohne Code-Fence gefunden")
+            alt_content = extract_block(alt_section, ALT_MARKER)
+            if alt_content is None:
+                errors.append(f"  ✗  {file_path} — ALT-Block ohne Marker/Fence gefunden")
                 continue
-            alt_content = alt_match.group(2)
 
             # NEU-Block extrahieren (bis nächsten ## FILE: / ### ALT oder Ende)
             next_boundary = len(body)
@@ -92,11 +121,10 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
                     next_boundary = pos
                     break
             neu_section = body[neu_pos:next_boundary]
-            neu_match   = FENCE.search(neu_section)
-            if not neu_match:
-                errors.append(f"  ✗  {file_path} — NEU-Block ohne Code-Fence gefunden")
+            neu_content = extract_block(neu_section, NEU_MARKER)
+            if neu_content is None:
+                errors.append(f"  ✗  {file_path} — NEU-Block ohne Marker/Fence gefunden")
                 continue
-            neu_content = neu_match.group(2)
 
             # Leerer NEU-Block ohne #DELETE → Fehler
             neu_stripped = neu_content.strip()

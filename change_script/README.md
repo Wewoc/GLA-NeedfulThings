@@ -4,21 +4,22 @@ Automatically applies Claude-delivered anchor blocks (ALT/NEU diffs) to project 
 
 ## How it works
 
-Claude delivers code changes as an `anchor_delivery.md` with structured ALT/NEU blocks:
+Claude delivers code changes as an `anchor_delivery.md` with structured ALT/NEU blocks. Block boundaries use unique sentinel markers (`<<<ALT>>>`/`<<<ALT_END>>>`, `<<<NEU>>>`/`<<<NEU_END>>>`) rather than plain backtick fences — this avoids a bug where a nested code fence inside the NEU content (e.g. an embedded example in documentation) could be mistaken for the closing fence, silently truncating the block:
 
 ```markdown
 ## FILE: src/my_module.py
 
 ### ALT
-\```python
+<<<ALT>>>
 old_code_here()
-\```
-
+<<<ALT_END>>>
 ### NEU
-\```python
+<<<NEU>>>
 new_code_here()
-\```
+<<<NEU_END>>>
 ```
+
+The marker content can optionally still be wrapped in backtick fences for nicer rendering when pasted into a chat — the parser only looks for the `<<<...>>>` markers and ignores any surrounding fence.
 
 `apply_anchors.py` reads this file and applies all changes in **two passes**:
 
@@ -26,6 +27,10 @@ new_code_here()
 - **Pass 2** — writes only if Pass 1 was 100% successful. No partial applies.
 
 Also supports `#DELETE` as the NEU content to remove an ALT block without replacement.
+
+### Legacy format
+
+Older `anchor_delivery.md` files that use plain backtick fences instead of the sentinel markers still work — the parser tries the markers first and falls back to fence-matching if none are found. New deliveries should use the marker format above, especially for blocks containing documentation with embedded code examples.
 
 ## Setup
 
