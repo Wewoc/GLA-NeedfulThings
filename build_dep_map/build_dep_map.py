@@ -203,7 +203,7 @@ def analyse_dynamic(scan_root: Path, all_files: list[Path]) -> dict[str, list[di
     result = {}
     for py_file in all_files:
         try:
-            rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             rel = py_file.name
 
@@ -230,7 +230,7 @@ def _build_module_index(all_files: list[Path], scan_root: Path) -> dict[str, Pat
         # Also register the relative dotted path
         # e.g. pkg/my_api.py → "pkg.my_api"
         try:
-            rel  = f.relativee_to(scan_root)
+            rel  = f.relative_to(scan_root)
             dotted = ".".join(rel.with_suffix("").parts)
             index[dotted] = f
         except ValueError:
@@ -248,7 +248,7 @@ def _resolve_internalal_path(module_name: str, full_name: str,
     for key in (full_name, module_name):
         if key in module_index:
             try:
-                return str(module_index[key].relativee_to(scan_root)).replace("\\", "/")
+                return str(module_index[key].relative_to(scan_root)).replace("\\", "/")
             except ValueError:
                 return str(module_index[key]).replace("\\", "/")
     return None
@@ -268,7 +268,7 @@ def analyse(scan_root: Path, all_files: list[Path]) -> dict:
 
     for py_file in all_files:
         try:
-            rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             rel = py_file.name
 
@@ -682,7 +682,7 @@ def analyse_fileio(scan_root: Path, all_files: list[Path]) -> dict[str, list[dic
     result = {}
     for py_file in all_files:
         try:
-            rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             rel = py_file.name
 
@@ -807,13 +807,13 @@ def analyse_callers(scan_root: Path, all_files: list[Path],
     module_index: dict[str, str] = {}
     for py_file in all_files:
         try:
-            rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             rel = py_file.name
         module_index[py_file.stem] = rel
         try:
             dotted = ".".join(
-                py_file.relativee_to(scan_root).with_suffix("").parts
+                py_file.relative_to(scan_root).with_suffix("").parts
             )
             module_index[dotted] = rel
         except ValueError:
@@ -835,7 +835,7 @@ def analyse_callers(scan_root: Path, all_files: list[Path],
 
     for py_file in all_files:
         try:
-            caller_rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            caller_rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             caller_rel = py_file.name
 
@@ -1091,22 +1091,22 @@ def _classify_handler(handler: ast.ExceptHandler) -> dict:
     has_pass    = any(isinstance(n, ast.Pass) for n in body)
     has_reraise = any(
         isinstance(n, ast.Raise) and n.exc is None
-        for n in ast.walk(ast.modules(body=body, type_ignores=[]))
+        for n in ast.walk(ast.Module(body=body, type_ignores=[]))
     )
     has_raise   = any(
         isinstance(n, ast.Raise) and n.exc is not None
-        for n in ast.walk(ast.modules(body=body, type_ignores=[]))
+        for n in ast.walk(ast.Module(body=body, type_ignores=[]))
     )
     has_log     = any(
         isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
         and n.func.attr in ("error", "warning", "exception", "critical",
                             "debug", "info", "log")
-        for n in ast.walk(ast.modules(body=body, type_ignores=[]))
+        for n in ast.walk(ast.Module(body=body, type_ignores=[]))
     )
 
     # Only a return with None/False/empty string/0?
     silent_returns = False
-    for node in ast.walk(ast.modules(body=body, type_ignores=[])):
+    for node in ast.walk(ast.Module(body=body, type_ignores=[])):
         if isinstance(node, ast.Return):
             v = node.value
             if v is None:
@@ -1154,7 +1154,7 @@ def analyse_exceptions(scan_root: Path, all_files: list[Path]) -> dict[str, list
 
     for py_file in all_files:
         try:
-            rel = str(py_file.relativee_to(scan_root)).replace("\\", "/")
+            rel = str(py_file.relative_to(scan_root)).replace("\\", "/")
         except ValueError:
             rel = py_file.name
 
