@@ -87,6 +87,17 @@ Reproduces specific reliability edge cases (silo repair, backfill abort, restore
 
 ---
 
+## code_metrics/
+
+Standalone, project-agnostic code inventory toolkit — six AST-based
+Python scripts (size/function/GUI-binding/complexity metrics) plus a
+batch runner and aggregator, packaged so it can be dropped into any
+Python project unmodified. Generalized out of the project-specific
+`project_metrics/` tooling built for GLA (v_metrics_01). See
+`code_metrics/README.md` for setup and usage.
+
+---
+
 ## Ecosystem Tools
 
 Independent apps that were born in the same workshop but have no dependency on GLA itself.
