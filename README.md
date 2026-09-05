@@ -1,4 +1,4 @@
-![Garmin Local Archive](img/Banner.png)
+![Garmin Local Archive](img/Banner.jpg)
 
 # Needful Things — GLA-Tools
 
@@ -95,6 +95,17 @@ batch runner and aggregator, packaged so it can be dropped into any
 Python project unmodified. Generalized out of the project-specific
 `project_metrics/` tooling built for GLA (v_metrics_01). See
 `code_metrics/README.md` for setup and usage.
+
+---
+
+## mcp-llm-tester
+ 
+Generic end-to-end test runner: sends a configurable catalog of
+questions to a list of local Ollama models and checks how each one
+handles tool calling against a running MCP server. Logs raw
+results (tool calls, arguments, timings, errors) as JSON/Markdown for
+manual evaluation -- no built-in scoring, no assumptions about which
+MCP tools exist. See `mcp-llm-tester/README.md`.
 
 ---
 
