@@ -98,14 +98,30 @@ Python project unmodified. Generalized out of the project-specific
 
 ---
 
-## mcp-llm-tester
- 
+### mcp-llm-tester
+
 Generic end-to-end test runner: sends a configurable catalog of
 questions to a list of local Ollama models and checks how each one
-handles tool calling against a running MCP server. Logs raw
-results (tool calls, arguments, timings, errors) as JSON/Markdown for
-manual evaluation -- no built-in scoring, no assumptions about which
-MCP tools exist. See `mcp-llm-tester/README.md`.
+handles tool calling against a running MCP server. Logs raw results
+(tool calls, arguments, timings, errors) as JSON/Markdown for manual
+evaluation -- no built-in scoring, no assumptions about which MCP
+tools exist.
+
+v2 adds an optional Tkinter GUI (`mcp_test_gui.py`) on top of the
+existing CLI path: pick catalogs/models by clicking, start/stop/resume
+runs, live log and progress display. Multiple question catalogs can
+now live side by side in a `question_catalog/` subfolder and be
+combined per run. The plain CLI entry point
+(`mcp_llm_test_runner.py` / `run_mcp_llm_test.bat`) still works
+unchanged.
+
+See `mcp-llm-tester/README.md`.
+
+
+---
+
+![mcp_llm_test_gui](img/mcp_llm_test_gui.png)
+
 
 ---
 
