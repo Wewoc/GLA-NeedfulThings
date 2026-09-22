@@ -9,12 +9,14 @@ logs everything as raw data for you to review afterwards.
 This is a generic tool: it has no built-in knowledge of what your MCP
 server's tools are called or what they do. You provide the questions
 and the expected tool/arguments as plain data in a question catalog
-file.
+file. Optionally, you can also compare several system prompt variants
+(e.g. a minimal one vs. a more guided one) against the same catalog.
 
 Two ways to run it:
 
-- **GUI** (`mcp_test_gui.py`) -- pick catalogs and models by clicking,
-  start/stop/resume runs, watch a live log and progress bar.
+- **GUI** (`mcp_test_gui.py`) -- pick catalogs, models, and system
+  prompt variants by clicking, start/stop/resume runs, watch a live
+  log and progress bar.
 - **CLI** (`mcp_llm_test_runner.py`, `main()`) -- plain script run, no
   interaction, uses `config.py` + `question_catalog.py` directly.
 
@@ -23,8 +25,8 @@ Both share the same underlying run logic (`run_test_session()` in
 
 ## What it does
 
-For every selected model, for every question in the selected
-catalog(s):
+For every selected model, for every selected system prompt variant,
+for every question in the selected catalog(s):
 
 1. Sends the question to the model via Ollama's `/api/chat`, along
    with the live tool definitions fetched from your MCP server
@@ -63,10 +65,16 @@ yourself afterwards.
 2. Put one or more question catalog files into the `question_catalog/`
    subfolder, named `question_catalog*.py` (see format below). A blank
    template is included there to start from.
-3. Run `run_mcp_llm_test_gui.bat` (Windows) or `python mcp_test_gui.py`.
-4. In the GUI:
-   - Select one or more catalogs and one or more models (click to
-     multi-select in each list).
+3. Optionally, put one or more system prompt files into the
+   `system_prompts/` subfolder, named `system_prompt*.md` (see System
+   prompt variants below). A minimal and a guided example are included
+   there to start from.
+4. Run `run_mcp_llm_test_gui.bat` (Windows) or `python mcp_test_gui.py`.
+5. In the GUI:
+   - Select one or more catalogs, one or more models, and one or more
+     system prompt variants (click to multi-select in each list). The
+     prompt list always includes a synthetic "(no system prompt)"
+     entry at the top, alongside anything found in `system_prompts/`.
    - Fill in the run folder fields (Nr./Date/Rest) -- a name is
      suggested automatically, but editable. This becomes the folder
      name under `results/`.
@@ -76,7 +84,7 @@ yourself afterwards.
    - **Resume run** becomes available after a stop (or automatically
      at GUI startup, if the last run folder was left incomplete) and
      continues the same run, skipping questions already completed.
-5. Results land in `results/<run_folder_name>/` -- see the Output
+6. Results land in `results/<run_folder_name>/` -- see the Output
    files section below.
 
 ## Usage -- CLI
@@ -114,14 +122,36 @@ Each catalog file must export a `QUESTIONS` list of such dicts. For
 the GUI, any file matching `question_catalog/question_catalog*.py` is
 picked up automatically and shown as a selectable catalog.
 
+## System prompt variants
+
+Each file in `system_prompts/` matching `system_prompt*.md` is a
+selectable system prompt, sent to Ollama as-is (plain text, no
+Markdown rendering). Use this to compare, for example, a minimal
+flow-control-only prompt against a more guided one that adds
+orchestration hints for your own tool set, without touching the
+question catalog or the runner itself. Two examples are included:
+
+- `system_prompt_minimal.md` -- flow control only (tells the model to
+  use tool results and not repeat calls), no hints about which tool to
+  pick. Identical in spirit to `config.SYSTEM_PROMPT`.
+- `system_prompt_guided.md` -- adds generic orchestration guidance
+  (multi-tool questions, consistent parameters across related calls,
+  retrying after a tool error, not inventing values). Adapt the
+  specifics to your own tools/domains before relying on it.
+
+In the CLI path (`main()`), only `config.SYSTEM_PROMPT` is used, same
+as before this feature existed -- `system_prompts/` only applies to
+the GUI.
+
 ## Output files
 
 Per run folder (`results/` for the CLI path, `results/<run_folder>/`
 for a GUI run):
 
-- `mcp_llm_test_progress.jsonl` -- one line per completed question,
-  written immediately. Interrupting a run and resuming it (CLI: rerun
-  the script; GUI: Resume run) skips everything already in this file.
+- `mcp_llm_test_progress.jsonl` -- one line per completed
+  (model, question, prompt variant) combination, written immediately.
+  Interrupting a run and resuming it (CLI: rerun the script; GUI:
+  Resume run) skips everything already in this file.
 - `mcp_llm_test_<timestamp>.json` -- full result dump for all
   questions/models from the run (including anything resumed from the
   progress file).
@@ -145,11 +175,13 @@ for a GUI run):
   so you can tell native and fallback tool calls apart when comparing
   models.
 - **No system prompt by default beyond flow control**: `SYSTEM_PROMPT`
-  in `config.py` is deliberately minimal -- it tells the model to use
-  tool results and not repeat calls, but gives no hint about which
-  tool to pick. This keeps the test focused on the model's own
-  tool-matching ability. Set it to `None`/`""` to test with no system
-  prompt at all.
+  in `config.py` (used by the CLI path, and as the GUI's fallback if
+  no prompt variant is available) is deliberately minimal -- it tells
+  the model to use tool results and not repeat calls, but gives no
+  hint about which tool to pick. This keeps the test focused on the
+  model's own tool-matching ability. Set it to `None`/`""` to test with
+  no system prompt at all, or use the GUI's system prompt variants (see
+  above) to compare several prompts in one run.
 
 ## What this tool does not do
 

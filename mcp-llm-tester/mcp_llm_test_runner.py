@@ -56,6 +56,17 @@ parameter, since the GUI needs live output and an extra
 logging.Handler (see _QueueLogHandler below) covers every
 logger.info/warning/error call automatically anyway -- no manual
 threading-through at every individual call site needed.
+
+── System prompt variants ───────────────────────────────────────────
+Analogous to the question catalogs: instead of a single fixed
+config.SYSTEM_PROMPT, run_test_session() optionally accepts a list of
+named (label, prompt_text) prompt variants (see
+discover_system_prompts()/load_system_prompt()) and runs every
+catalog x model combination through each variant in turn. Lets you
+compare a minimal prompt against a more guided one without changing
+the tool-matching test itself. Omitting prompt_variants keeps the
+previous single-prompt behavior unchanged (backward compatible for
+the CLI path).
 """
 
 import importlib.util
@@ -301,6 +312,24 @@ def fetch_ollama_models() -> list[str]:
     return [m["name"] for m in data.get("models", [])]
 
 
+def unload_ollama_model(model: str) -> None:
+    """Asks Ollama to unload a model from memory immediately (the
+    official mechanism: keep_alive=0 on a call with no real messages)
+    -- prevents several models from stacking up in RAM/VRAM at once
+    when cycling through many of them in sequence, since without this
+    signal Ollama only unloads after its own idle timeout. Best
+    effort: a failure here must not abort the run -- the model would
+    just unload a bit later on its own instead."""
+    try:
+        requests.post(
+            f"{config.OLLAMA_URL}/api/chat",
+            json={"model": model, "messages": [], "keep_alive": 0},
+            timeout=config.OLLAMA_TIMEOUT_SECONDS,
+        )
+    except Exception as exc:  # noqa: BLE001 — best effort, must not abort the run
+        logger.warning("Could not explicitly unload model %s: %s", model, exc)
+
+
 # ── Catalog loading ──────────────────────────────────────────────────
 
 def load_question_catalog(path: Path) -> list[dict]:
@@ -333,9 +362,25 @@ def discover_question_catalogs(directory: Path) -> list[Path]:
     return sorted(directory.glob("question_catalog*.py"))
 
 
+# ── System prompt variants ───────────────────────────────────────────
+
+def discover_system_prompts(directory: Path) -> list[Path]:
+    """Finds all system_prompt*.md files in a folder (naming convention
+    analogous to question_catalog*.py). Sorted alphabetically for a
+    stable, predictable list order in the GUI."""
+    return sorted(directory.glob("system_prompt*.md"))
+
+
+def load_system_prompt(path: Path) -> str:
+    """Loads a prompt file as plain text (no Markdown rendering -- the
+    raw text goes to Ollama 1:1 as the system message)."""
+    return path.read_text(encoding="utf-8").strip()
+
+
 # ── Per-question flow ────────────────────────────────────────────────
 
-def run_question(model: str, question: dict, tools: list[dict]) -> dict:
+def run_question(model: str, question: dict, tools: list[dict],
+                  system_prompt: str | None = None) -> dict:
     """Multi-turn loop for a single question against one model. Returns
     a complete raw log -- never a grade/evaluation."""
     record = {
@@ -354,8 +399,8 @@ def run_question(model: str, question: dict, tools: list[dict]) -> dict:
     }
 
     messages = []
-    if getattr(config, "SYSTEM_PROMPT", None):
-        messages.append({"role": "system", "content": config.SYSTEM_PROMPT})
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": question["text"]})
     start = time.monotonic()
 
@@ -450,12 +495,18 @@ def run_question(model: str, question: dict, tools: list[dict]) -> dict:
 
 def load_completed_keys(progress_path: Path) -> tuple[set[tuple[str, object]], list[dict]]:
     """Reads an existing progress file (if present) and returns:
-    (1) the set of already-completed (model, question_id) keys to
-    skip, (2) the already-loaded records themselves, so the final
-    report stays complete on a resumed run instead of only showing the
-    newly added questions. Broken/unreadable individual lines are
-    skipped and logged, not a reason to abort the whole run -- resume
-    should be more robust than the problem it's meant to solve."""
+    (1) the set of already-completed (model, question_id,
+    prompt_variant) keys to skip, (2) the already-loaded records
+    themselves, so the final report stays complete on a resumed run
+    instead of only showing the newly added questions. Broken/unreadable
+    individual lines are skipped and logged, not a reason to abort the
+    whole run -- resume should be more robust than the problem it's
+    meant to solve.
+
+    Older progress files predating the prompt-variant axis have no
+    "prompt_variant" field (reads back as None) -- on resume this at
+    worst re-runs a handful of questions unnecessarily, never loses
+    data or wrongly marks a combination as done."""
     completed: set[tuple[str, object]] = set()
     records: list[dict] = []
     if not progress_path.exists():
@@ -473,7 +524,7 @@ def load_completed_keys(progress_path: Path) -> tuple[set[tuple[str, object]], l
                     "Progress file %s, line %d unreadable -- skipped: %s",
                     progress_path, line_num, exc)
                 continue
-            completed.add((record.get("model"), record.get("question_id")))
+            completed.add((record.get("model"), record.get("question_id"), record.get("prompt_variant")))
             records.append(record)
 
     if records:
@@ -505,7 +556,7 @@ def write_results(results: list[dict], output_dir: Path) -> tuple[Path, Path]:
     md_path = output_dir / f"mcp_llm_test_{run_id}.md"
     lines = [f"# MCP-LLM test run {run_id}", ""]
     for r in results:
-        lines.append(f"## Model: {r['model']} — question {r['question_id']} (round {r['round']})")
+        lines.append(f"## Model: {r['model']} — Prompt: {r.get('prompt_variant', 'config_default')} — question {r['question_id']} (round {r['round']})")
         lines.append(f"**Question:** {r['question_text']}")
         lines.append(f"**Expected tool:** {r['expected_tool']}")
         lines.append(f"**Duration:** {r['duration_seconds']}s, **Turns:** {r['turns_used']}")
@@ -531,19 +582,26 @@ def run_test_session(
     catalog_paths: list[Path],
     model_list: list[str],
     output_dir: Path,
+    prompt_variants: Optional[list[tuple[str, str]]] = None,
     log_callback: Optional[Callable[[str], None]] = None,
     progress_callback: Optional[Callable[[dict], None]] = None,
     stop_event: Optional[threading.Event] = None,
     resume: bool = False,
 ) -> tuple[Path, Path]:
-    """Central run function, iterates catalog -> model -> question (in
-    exactly this order: catalog A with every model completed first,
-    then catalog B with every model, and so on).
+    """Central run function, iterates catalog -> model -> prompt variant
+    -> question (in exactly this order: catalog A with model 1 through
+    every prompt variant, then model 2, and so on, then catalog B).
 
     Parameters:
       catalog_paths      -- list of paths to question_catalog*.py files,
                             in the desired processing order.
       model_list          -- list of Ollama model names.
+      prompt_variants     -- list of (label, prompt_text) pairs (see
+                            discover_system_prompts()/load_system_prompt()).
+                            If None/empty: single-element default
+                            [("config_default", config.SYSTEM_PROMPT)] --
+                            identical to the previous main() behavior,
+                            purely backward compatible for the CLI path.
       output_dir           -- run folder that the progress file and the
                             final JSON/MD are written into (with
                             resume=True this must be the same folder as
@@ -557,6 +615,8 @@ def run_test_session(
                               {"catalog": <filename>, "catalog_idx": int,
                                "catalog_total": int, "model": <name>,
                                "model_idx": int, "model_total": int,
+                               "prompt": <variant label>, "prompt_idx": int,
+                               "prompt_total": int,
                                "question_idx": int, "question_total": int}
                             (1-based counters, question_idx/total refer
                             to the currently active catalog).
@@ -568,15 +628,16 @@ def run_test_session(
                             does the run stop cleanly.
       resume               -- if True: an existing progress file in
                             output_dir is read, already-completed
-                            (model, question_id) combinations are
-                            skipped (see load_completed_keys()).
-                            If False: an existing progress file in
-                            output_dir is not deleted, but also not
-                            taken into account -- appending to a
-                            foreign/stale file would mix data, so with
-                            resume=False and an already-existing
-                            progress file, an error is raised instead
-                            of silently overwriting or mixing data.
+                            (model, question_id, prompt_variant)
+                            combinations are skipped (see
+                            load_completed_keys()). If False: an
+                            existing progress file in output_dir is not
+                            deleted, but also not taken into account --
+                            appending to a foreign/stale file would mix
+                            data, so with resume=False and an
+                            already-existing progress file, an error is
+                            raised instead of silently overwriting or
+                            mixing data.
 
     Returns (json_path, md_path) of the final result files.
     """
@@ -590,6 +651,10 @@ def run_test_session(
             "Use a new run folder for a new run, or set resume=True to "
             "continue the existing one."
         )
+
+    variants = prompt_variants if prompt_variants else [
+        ("config_default", getattr(config, "SYSTEM_PROMPT", None) or "")
+    ]
 
     handler = _install_log_callback(log_callback)
     try:
@@ -617,53 +682,77 @@ def run_test_session(
             logger.info("=== Catalog %d/%d: %s (%d questions) ===",
                         catalog_idx, catalog_total, catalog_name, question_total)
 
+            prompt_total = len(variants)
             for model_idx, model in enumerate(model_list, start=1):
                 logger.info("--- Model %d/%d: %s ---", model_idx, model_total, model)
 
-                for question_idx, question in enumerate(questions, start=1):
-                    key = (model, question["id"])
-                    if key in completed_keys:
-                        logger.info(
-                            "[%s | %s | %d/%d] Question %s: already done -- skipped",
-                            catalog_name, model, question_idx, question_total, question["id"])
-                    else:
-                        logger.info(
-                            "[%s | %s | %d/%d] Question %s: %s",
-                            catalog_name, model, question_idx, question_total,
-                            question["id"], question["text"])
-                        record = run_question(model, question, tools)
-                        record["catalog"] = catalog_name
-                        if record["error"]:
-                            logger.warning("  -> Error: %s", record["error"])
+                for prompt_idx, (prompt_name, prompt_text) in enumerate(variants, start=1):
+                    logger.info("  >>> Prompt variant %d/%d: %s <<<",
+                                prompt_idx, prompt_total, prompt_name)
+
+                    for question_idx, question in enumerate(questions, start=1):
+                        key = (model, question["id"], prompt_name)
+                        if key in completed_keys:
+                            logger.info(
+                                "[%s | %s | %s | %d/%d] Question %s: already done -- skipped",
+                                catalog_name, model, prompt_name, question_idx, question_total,
+                                question["id"])
                         else:
-                            logger.info("  -> %d tool call(s), %.1fs",
-                                        len(record["tool_calls"]), record["duration_seconds"])
-                        results.append(record)
-                        append_result(record, progress_path)
+                            logger.info(
+                                "[%s | %s | %s | %d/%d] Question %s: %s",
+                                catalog_name, model, prompt_name, question_idx, question_total,
+                                question["id"], question["text"])
+                            record = run_question(model, question, tools, system_prompt=prompt_text)
+                            record["catalog"] = catalog_name
+                            record["prompt_variant"] = prompt_name
+                            if record["error"]:
+                                logger.warning("  -> Error: %s", record["error"])
+                            else:
+                                logger.info("  -> %d tool call(s), %.1fs",
+                                            len(record["tool_calls"]), record["duration_seconds"])
+                            results.append(record)
+                            append_result(record, progress_path)
 
-                    if progress_callback is not None:
-                        progress_callback({
-                            "catalog": catalog_name,
-                            "catalog_idx": catalog_idx,
-                            "catalog_total": catalog_total,
-                            "model": model,
-                            "model_idx": model_idx,
-                            "model_total": model_total,
-                            "question_idx": question_idx,
-                            "question_total": question_total,
-                        })
+                        if progress_callback is not None:
+                            progress_callback({
+                                "catalog": catalog_name,
+                                "catalog_idx": catalog_idx,
+                                "catalog_total": catalog_total,
+                                "model": model,
+                                "model_idx": model_idx,
+                                "model_total": model_total,
+                                "prompt": prompt_name,
+                                "prompt_idx": prompt_idx,
+                                "prompt_total": prompt_total,
+                                "question_idx": question_idx,
+                                "question_total": question_total,
+                            })
 
-                    # Stop is deliberately only checked AFTER the completed
-                    # question -- the currently running question is
-                    # always finished first, so the progress file never
-                    # ends up in a half-written/inconsistent state.
-                    if stop_event is not None and stop_event.is_set():
-                        logger.info("Stop requested -- run will end after this question.")
-                        json_path, md_path = write_results(results, output_dir)
-                        logger.info("Intermediate results written to: %s / %s", json_path, md_path)
-                        return json_path, md_path
+                        # Stop is deliberately only checked AFTER the completed
+                        # question -- the currently running question is
+                        # always finished first, so the progress file never
+                        # ends up in a half-written/inconsistent state.
+                        if stop_event is not None and stop_event.is_set():
+                            logger.info("Stop requested -- run will end after this question.")
+                            json_path, md_path = write_results(results, output_dir)
+                            # Deliberately NO mcp_llm_test_done.marker here --
+                            # the marker distinguishes genuine completion from
+                            # a stop, so find_resumable_run() (mcp_test_gui.py)
+                            # still recognizes a stopped run as resumable even
+                            # after a GUI restart, despite a (snapshot) JSON
+                            # already sitting in the folder.
+                            logger.info("Intermediate results written to: %s / %s", json_path, md_path)
+                            return json_path, md_path
+
+                # Explicitly unload the model for this catalog once all
+                # prompt variants/questions are done -- otherwise, with
+                # many models in sequence, several can end up loaded at
+                # once in RAM/VRAM, since Ollama only unloads after its
+                # own timeout without this signal.
+                unload_ollama_model(model)
 
         json_path, md_path = write_results(results, output_dir)
+        (output_dir / "mcp_llm_test_done.marker").touch()
         logger.info("Done. Results written to:")
         logger.info("  %s", json_path)
         logger.info("  %s", md_path)
