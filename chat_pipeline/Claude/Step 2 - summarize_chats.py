@@ -101,7 +101,7 @@ def messages_to_text(messages: list) -> str:
             continue
         speaker = "USER" if any(x in role for x in ["human", "user", "mensch"]) else "ASSISTANT"
         if len(content) > 2000:
-            content = content[:2000] + "\n[... gekürzt ...]"
+            content = content[:2000] + "\n[... truncated ...]"
         lines.append(f"{speaker}: {content}\n")
     return "\n".join(lines)
 
@@ -189,7 +189,7 @@ def main():
             print(" ✓")
 
         except Exception as e:
-            print(f" ✗ Fehler: {e}")
+            print(f" ✗ Error: {e}")
             errors += 1
 
     print()

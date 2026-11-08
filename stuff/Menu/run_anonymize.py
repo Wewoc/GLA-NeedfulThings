@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-run_anonymize.py — needfull things / menu
+run_anonymize.py — Needful Things / menu
 Anonymizes all JSON files in the target folder.
 
 Input:  target folder (sys.argv[1]) — all *.json files directly in it
@@ -62,7 +62,7 @@ def main():
 
     print()
     print("=================================================================")
-    print("  Anonymize JSONs -- needfull things")
+    print("  Anonymize JSONs -- Needful Things")
     print("=================================================================")
     print()
     print(f"  Folder : {target}")

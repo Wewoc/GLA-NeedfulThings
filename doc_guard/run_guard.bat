@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo =================================================================
-echo   run_guard.bat — Garmin Local Archive
+echo   run_guard.bat — Needful Things
 echo =================================================================
 echo.
 

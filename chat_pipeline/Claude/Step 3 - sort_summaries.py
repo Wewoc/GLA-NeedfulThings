@@ -35,19 +35,19 @@ def parse_sections(text):
 
 def main():
     if not SUMMARIES_FILE.exists():
-        print(f"✗ Datei nicht gefunden: {SUMMARIES_FILE.resolve()}")
+        print(f"✗ File not found: {SUMMARIES_FILE.resolve()}")
         return
 
-    print("Garmin Local Archive — Summary Sorter")
+    print("Needful Things — Summary Sorter")
     print("=" * 40)
     text = SUMMARIES_FILE.read_text(encoding="utf-8")
     header, sections = parse_sections(text)
-    print(f"  Sections gefunden : {len(sections)}")
+    print(f"  Sections found    : {len(sections)}")
 
     with_ts    = sorted([s for s in sections if s["timestamp"]], key=lambda s: s["timestamp"])
     without_ts = [s for s in sections if not s["timestamp"]]
     if without_ts:
-        print(f"  Ohne Timestamp    : {len(without_ts)} — werden ans Ende gestellt")
+        print(f"  Without timestamp : {len(without_ts)} — moved to the end")
 
     lines = [header.rstrip(), ""]
     for i, s in enumerate(with_ts + without_ts, start=1):

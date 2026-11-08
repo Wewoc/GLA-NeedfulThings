@@ -1,5 +1,5 @@
 """
-scan_critical_deps.py — needfull things
+scan_critical_deps.py — Needful Things
 Scans the project for critical dependencies and shadow copies.
 
 Process:
@@ -75,7 +75,7 @@ def prepare_config() -> str | None:
         print("✗  No scan_config_v*.py found.")
         return None
 
-    print(f"  Config gefunden : {newest.name}")
+    print(f"  Config found    : {newest.name}")
 
     # Delete old scan_config.py
     if CONFIG_FILE.exists():
@@ -287,7 +287,7 @@ def build_md(config, classified: dict, targets: list[dict],
     ses_note = getattr(config, "SESSION_NOTE", "")
 
     lines = []
-    lines.append(f"# DEPS_CRITICAL — needfull things")
+    lines.append(f"# DEPS_CRITICAL — Needful Things")
     lines.append(f"")
     lines.append(f"Generated : {now}")
     lines.append(f"Config    : {cfg_id}")
@@ -297,13 +297,13 @@ def build_md(config, classified: dict, targets: list[dict],
     lines.append(f"")
     lines.append(f"---")
     lines.append(f"")
-    lines.append(f"## Legende")
+    lines.append(f"## Legend")
     lines.append(f"")
     lines.append(f"| Verdict | Meaning |")
     lines.append(f"|---|---|")
     lines.append(f"| `relevant` | Confirmed critical dependency — review before refactoring |")
     lines.append(f"| `unsure`   | Ollama uncertain — manual review recommended |")
-    lines.append(f"| `not_relevant` | Kein Bezug — ignorieren |")
+    lines.append(f"| `not_relevant` | No relation — ignore |")
     lines.append(f"")
     lines.append(f"---")
     lines.append(f"")
@@ -311,10 +311,10 @@ def build_md(config, classified: dict, targets: list[dict],
     targets_by_id = {t["id"]: t for t in targets}
     has_relevant  = False
 
-    # Zusammenfassung oben
-    lines.append(f"## Zusammenfassung")
+    # Summary at the top
+    lines.append(f"## Summary")
     lines.append(f"")
-    lines.append(f"| Target | Relevant | Unsure | Not Relevant | Gesamt |")
+    lines.append(f"| Target | Relevant | Unsure | Not Relevant | Total |")
     lines.append(f"|---|---|---|---|---|")
 
     summary_rows = []
@@ -332,7 +332,7 @@ def build_md(config, classified: dict, targets: list[dict],
     lines.append(f"---")
     lines.append(f"")
 
-    # Detail-Sektionen — nur relevant + unsure
+    # Detail sections — relevant + unsure only
     lines.append(f"## Details — Relevant & Unsure")
     lines.append(f"")
 
@@ -415,7 +415,7 @@ def archive(config_id: str, original_config_name: str) -> None:
 
 def main() -> None:
     print("=" * 65)
-    print("  scan_critical_deps.py — needfull things")
+    print("  scan_critical_deps.py — Needful Things")
     print("=" * 65)
     print()
 
@@ -476,7 +476,7 @@ def main() -> None:
     print("── Output ──────────────────────────────────────────────────")
     md_content = build_md(cfg, classified, targets, project_root)
     OUTPUT_MD.write_text(md_content, encoding="utf-8")
-    print(f"  ✓  {OUTPUT_MD} geschrieben\n")
+    print(f"  ✓  {OUTPUT_MD} written\n")
 
     # 6 — Archive
     print("── Archiving ───────────────────────────────────────────────")

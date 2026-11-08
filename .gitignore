@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Tool output and archives written next to the scripts
+build_dep_map/output/
+code_metrics/output/
+scanner/scan_output/
+scanner/scan_configs/
+scope_snapshot/scope_output/
+scope_snapshot/scope_configs/
+mcp-llm-tester/results/
+mutation_runner/results/
+mutation_runner/work/
+mutation_runner/work_stage2/
+check_vulture/output/
+
+# Claude's anchor deliveries dropped next to the applier
+change_script/anchor_delivery*.md

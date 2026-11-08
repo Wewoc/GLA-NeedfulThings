@@ -63,7 +63,7 @@ A fully commented template is included as `scan_config_v1_template.py`.
 ### 3. Directory layout
 
 ```
-needfull_things/
+GLA-NeedfulThings/
 └── scanner/
     ├── scan_critical_deps.py
     ├── run_scan.bat

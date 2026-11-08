@@ -41,10 +41,10 @@ def convert(path):
 def main():
     MD_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     json_files = sorted([f for f in SORTED_DIR.glob("*.json") if f.name != "merged_chats.json"])
-    print(f"Garmin Local Archive — JSON → Markdown")
-    print(f"  {len(json_files)} Dateien gefunden")
+    print(f"Needful Things — JSON → Markdown")
+    print(f"  {len(json_files)} files found")
     done = sum(1 for f in json_files if convert(f) and print(f"  ✓ {f.name}") is None)
-    print(f"\n  ✓ {done} Markdown-Dateien erstellt in: {MD_EXPORT_DIR.resolve()}")
+    print(f"\n  ✓ {done} Markdown files created in: {MD_EXPORT_DIR.resolve()}")
 
 if __name__ == "__main__":
     main()

@@ -17,7 +17,7 @@ Running the full chain against a project writes six files to
 
 | Script | Output | What it shows |
 |---|---|---|
-| `count_project.py` | `project_stats.md` | Files/lines/words/chars by file type; Python code-vs-prose split |
+| `count_project.py` | `project_stats.md` | Files/lines/words/chars by file type; Python code-vs-prose split (the config-free one-file variant is `stuff/count_project.py`) |
 | `list_functions.py` | `FUNCTION_MAP.md` | Every function, method, closure and class, with line count, via AST |
 | `list_gui_bindings.py` | `GUI_BINDINGS.md` | Every `.connect(...)` call found project-wide, with signal name and handler classification |
 | `list_longest_functions.py` | `LONGEST_FUNCTIONS.md` | Functions/methods over a line-length threshold, read back out of `FUNCTION_MAP.md` |

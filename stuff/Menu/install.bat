@@ -1,12 +1,12 @@
 @echo off
 chcp 65001 >nul
-title install -- needfull things / menu
+title install -- Needful Things / menu
 
 set "MENU_DIR=%~dp0"
 if "%MENU_DIR:~-1%"=="\" set "MENU_DIR=%MENU_DIR:~0,-1%"
 
 echo.
-echo install.bat -- needfull things / menu
+echo install.bat -- Needful Things / menu
 echo Context menu integration for Windows Explorer
 echo.
 echo Menu directory: %MENU_DIR%

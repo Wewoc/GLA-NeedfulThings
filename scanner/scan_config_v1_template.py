@@ -1,5 +1,5 @@
 """
-scan_config_v1_template.py — needfull things · Scanner Configuration
+scan_config_v1_template.py — Needful Things · Scanner Configuration
 Rename to scan_config_v1.py (or higher) and adjust.
 
 The scanner always picks the newest scan_config_v*.py (by mtime).

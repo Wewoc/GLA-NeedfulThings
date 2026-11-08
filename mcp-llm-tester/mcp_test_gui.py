@@ -52,7 +52,7 @@ RESULTS_DIR = Path(__file__).parent / "results"
 _NO_SYSTEM_PROMPT_LABEL = "(no system prompt)"
 
 
-# ── Hilfsfunktionen (reine Logik, kein Tkinter) ─────────────────────
+# ── Helper functions (pure logic, no Tkinter) ─────────────────────
 
 def _highest_lauf_dir(results_dir: Path) -> tuple[int, Path] | None:
     """Finds the lauf_<nr>_*-folder with the highest number in
@@ -636,7 +636,7 @@ class McpTestGui:
         name = build_lauf_ordner_name(self.nr_var.get(), self.datum_var.get(), self.freitext_var.get())
         self.preview_label.config(text=f"Folder name: {name}")
 
-    # ── Log-Ausgabe (nur aus dem Mainloop-Thread aufrufen) ───────────
+    # ── Log output (call only from the mainloop thread) ───────────
 
     def _append_log(self, line: str) -> None:
         self.log_text.config(state="normal")

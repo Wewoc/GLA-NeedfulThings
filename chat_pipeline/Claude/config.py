@@ -15,7 +15,7 @@ from pathlib import Path
 # ── Pipeline settings ──────────────────────────────────────────────────────────
 # Set by run.bat as environment variables. Edit defaults here for manual runs.
 
-SEARCH_LABEL   = os.getenv("SEARCH_LABEL",    "Garmin")
+SEARCH_LABEL   = os.getenv("SEARCH_LABEL",    "MyProject")   # label prefix of your chats — adjust
 INPUT_DIR      = Path(os.getenv("INPUT_DIR",  "."))
 MODEL          = os.getenv("MODEL",           "qwen2.5-coder:14b")
 OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "300"))

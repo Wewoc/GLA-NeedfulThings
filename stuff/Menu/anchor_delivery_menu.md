@@ -1,4 +1,4 @@
-# anchor_delivery — needfull things / menu
+# anchor_delivery — Needful Things / menu
 # Adds sys.argv[1] path support to merge_to_md.py, count_project.py, count_chats.py
 # Original behaviour (double-click) is preserved in all three cases.
 

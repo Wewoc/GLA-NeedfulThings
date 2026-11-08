@@ -1,0 +1,6 @@
+# Personal local paths (copy of netz2_config.example.py)
+netz2_config.py
+
+# Diagnostic runs and their temporary working folders
+diagnose_tmp*/
+output/

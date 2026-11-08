@@ -1,5 +1,5 @@
 """
-write_reg.py -- needfull things / menu
+write_reg.py -- Needful Things / menu
 Writes context menu entries directly via winreg (no regedit, no elevation needed).
 Called by install.bat with the menu directory as argument.
 """

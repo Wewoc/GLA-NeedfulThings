@@ -19,11 +19,11 @@ try:
     from docx.shared import RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 except ImportError:
-    print("✗ python-docx nicht installiert — pip install python-docx")
+    print("✗ python-docx not installed — pip install python-docx")
     raise SystemExit(1)
 
 def format_ts(ts):
-    if not ts: return "Kein Zeitstempel"
+    if not ts: return "No timestamp"
     try:
         return datetime.fromisoformat(str(ts).replace("Z", "+00:00")).strftime("%d.%m.%Y %H:%M")
     except:
@@ -66,10 +66,10 @@ def convert(path):
 def main():
     WORD_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     json_files = sorted([f for f in SORTED_DIR.glob("*.json") if f.name != "merged_chats.json"])
-    print(f"Garmin Local Archive — JSON → Word")
-    print(f"  {len(json_files)} Dateien gefunden")
+    print(f"Needful Things — JSON → Word")
+    print(f"  {len(json_files)} files found")
     done = sum(1 for f in json_files if convert(f) and print(f"  ✓ {f.name}") is None)
-    print(f"\n  ✓ {done} Word-Dateien erstellt in: {WORD_EXPORT_DIR.resolve()}")
+    print(f"\n  ✓ {done} Word files created in: {WORD_EXPORT_DIR.resolve()}")
 
 if __name__ == "__main__":
     main()

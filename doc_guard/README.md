@@ -18,7 +18,7 @@ Same path convention as `apply_anchors.py` and `generate_metrics.py` — place
 this script one level above the target project:
 
 ```
-PROJECT_ROOT = SCRIPT_DIR / "../garmin_collector-1_work"
+PROJECT_ROOT = SCRIPT_DIR / "../my_project"   # adjust to your project
 SRC_DIR      = PROJECT_ROOT / "src"
 ```
 

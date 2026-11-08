@@ -1,13 +1,13 @@
 """
 count_chats.py — Chat Statistics Counter
-Zählt Zeilen / Wörter / Zeichen in Chat-Exporten, aufgeteilt nach User / KI.
+Counts lines / words / characters in chat exports, split by user / AI.
 
-Unterstützte Formate:
+Supported formats:
   - Claude JSON  (.json)  — sender: human / assistant
-  - Claude MD    (.md)    — ### 👤 Du  /  ### 🤖 Assistant
+  - Claude MD    (.md)    — ### 👤 Du  /  ### 🤖 Assistant   ("Du" = German export UI)
   - Gemini MD    (.md)    — ## 👤 You  /  ## 🤖 Gemini
 
-Ausgabe: chat_stats.md
+Output: chat_stats.md
 """
 
 import os
@@ -16,7 +16,7 @@ import re
 from collections import defaultdict
 from datetime import datetime
 
-# ─── Konfiguration ────────────────────────────────────────────────────────────
+# ─── Configuration ────────────────────────────────────────────────────────────
 
 import sys as _sys
 ROOT   = _sys.argv[1] if len(_sys.argv) > 1 else "."
@@ -36,12 +36,12 @@ EXCLUDE_FILES = {
 }
 
 
-# ─── Datenstruktur ────────────────────────────────────────────────────────────
+# ─── Data structure ────────────────────────────────────────────────────────────
 
 class TurnStats:
-    """Zähler für eine Seite (User oder KI)."""
+    """Counter for one side (user or AI)."""
     def __init__(self):
-        self.turns  = 0    # Anzahl Nachrichten / Turns
+        self.turns  = 0    # number of messages / turns
         self.words  = 0
         self.chars  = 0
 
@@ -51,7 +51,7 @@ class TurnStats:
         self.chars += len(text)
 
 class FileStats:
-    """Zähler pro Datei."""
+    """Counter per file."""
     def __init__(self, source_format: str):
         self.fmt   = source_format
         self.user  = TurnStats()
@@ -64,15 +64,15 @@ class FileStats:
 
 # ─── Parser ───────────────────────────────────────────────────────────────────
 
-# Claude MD: ### 👤 Du  oder  ### 🤖 Assistant
+# Claude MD: ### 👤 Du  or  ### 🤖 Assistant
 _CLAUDE_MD_USER = re.compile(r"^### 👤 Du\b")
 _CLAUDE_MD_AI   = re.compile(r"^### 🤖 Assistant\b")
 
-# Gemini MD: ## 👤 You  oder  ## 🤖 Gemini
+# Gemini MD: ## 👤 You  or  ## 🤖 Gemini
 _GEMINI_MD_USER = re.compile(r"^## 👤 You\b")
 _GEMINI_MD_AI   = re.compile(r"^## 🤖 Gemini\b")
 
-# Jeder MD-Separator / Metadaten-Zeile (wird nicht zum Text gezählt)
+# Any MD separator / metadata line (not counted as text)
 _MD_META = re.compile(r"^(---|\*[^*].*\*|#[^#].*Export.*|>.*---)\s*$")
 
 
@@ -84,14 +84,14 @@ def _is_section_header(line: str) -> bool:
 
 
 def parse_md(path: str) -> FileStats | None:
-    """Parst Claude-MD und Gemini-MD Exporte."""
+    """Parses Claude MD and Gemini MD exports."""
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
     except Exception:
         return None
 
-    # Format erkennen
+    # Detect the format
     content = "".join(lines)
     if "### 👤 Du" in content or "### 🤖 Assistant" in content:
         fmt = "Claude MD"
@@ -102,7 +102,7 @@ def parse_md(path: str) -> FileStats | None:
         re_user = _GEMINI_MD_USER
         re_ai   = _GEMINI_MD_AI
     else:
-        return None   # kein bekanntes Chat-MD Format
+        return None   # no known chat MD format
 
     stats   = FileStats(fmt)
     current = None   # "user" | "ai" | None
@@ -111,7 +111,7 @@ def parse_md(path: str) -> FileStats | None:
     def flush():
         nonlocal buf, current
         if current and buf:
-            text = " ".join(" ".join(buf).split())   # Whitespace normalisieren
+            text = " ".join(" ".join(buf).split())   # normalize whitespace
             if text:
                 if current == "user":
                     stats.user.add_text(text)
@@ -131,11 +131,11 @@ def parse_md(path: str) -> FileStats | None:
             current = "ai"
             continue
 
-        # Header-Zeilen und Meta überspringen
+        # Skip header lines and meta
         if _is_section_header(stripped) or _MD_META.match(stripped):
             continue
 
-        # Metazeile direkt nach einem Turn-Header (Datum etc.) überspringen
+        # Skip the meta line directly after a turn header (date etc.)
         if stripped.startswith("> ---"):
             continue
 
@@ -147,7 +147,7 @@ def parse_md(path: str) -> FileStats | None:
 
 
 def parse_json(path: str) -> FileStats | None:
-    """Parst Claude JSON Exporte."""
+    """Parses Claude JSON exports."""
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             data = json.load(f)
@@ -167,7 +167,7 @@ def parse_json(path: str) -> FileStats | None:
         if sender not in ("human", "assistant"):
             continue
 
-        # Text aus content-Blöcken sammeln (nur type=text)
+        # Collect text from content blocks (type=text only)
         parts = []
         for block in msg.get("content", []):
             if block.get("type") == "text":
@@ -175,7 +175,7 @@ def parse_json(path: str) -> FileStats | None:
                 if t:
                     parts.append(t)
 
-        # Fallback: top-level "text" Feld
+        # Fallback: top-level "text" field
         if not parts:
             t = msg.get("text", "").strip()
             if t:
@@ -195,15 +195,15 @@ def parse_json(path: str) -> FileStats | None:
 
 # ─── Scan ─────────────────────────────────────────────────────────────────────
 
-# Gesamtstatistik pro Format
-format_totals: dict[str, FileStats] = {}   # fmt → aggregierter FileStats
+# Overall statistics per format
+format_totals: dict[str, FileStats] = {}   # fmt → aggregated FileStats
 all_files: list[tuple[str, FileStats]] = []  # (rel_path, stats)
 
 grand_user = TurnStats()
 grand_ai   = TurnStats()
 
 def merge_into(target: FileStats, src: FileStats):
-    """Addiert src-Werte in target."""
+    """Adds src values into target."""
     target.user.turns += src.user.turns
     target.user.words += src.user.words
     target.user.chars += src.user.chars
@@ -235,12 +235,12 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
 
         all_files.append((rel_path, stats))
 
-        # In Formatgruppe aggregieren
+        # Aggregate into the format group
         if stats.fmt not in format_totals:
             format_totals[stats.fmt] = FileStats(stats.fmt)
         merge_into(format_totals[stats.fmt], stats)
 
-        # Gesamtsumme
+        # Grand total
         grand_user.turns += stats.user.turns
         grand_user.words += stats.user.words
         grand_user.chars += stats.user.chars
@@ -249,7 +249,7 @@ for dirpath, dirnames, filenames in os.walk(ROOT):
         grand_ai.chars   += stats.ai.chars
 
 
-# ─── Ausgabe ──────────────────────────────────────────────────────────────────
+# ─── Output ──────────────────────────────────────────────────────────────────
 
 now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -264,39 +264,39 @@ def fmt_row(label, u: TurnStats, a: TurnStats) -> str:
     )
 
 lines_out = []
-lines_out.append(f"# Chat-Statistik")
+lines_out.append(f"# Chat statistics")
 lines_out.append(f"")
-lines_out.append(f"*Generiert: {now}*")
+lines_out.append(f"*Generated: {now}*")
 lines_out.append(f"")
 lines_out.append(f"---")
 lines_out.append(f"")
 
-# ── Gesamt ────────────────────────────────────────────────────────────────────
+# ── Total ────────────────────────────────────────────────────────────────────
 total_files = len(all_files)
 total_turns = grand_user.turns + grand_ai.turns
 
-lines_out.append(f"## Gesamt")
+lines_out.append(f"## Total")
 lines_out.append(f"")
-lines_out.append(f"| | Wert |")
+lines_out.append(f"| | Value |")
 lines_out.append(f"|---|---:|")
-lines_out.append(f"| Dateien          | {total_files:,} |")
-lines_out.append(f"| Turns gesamt     | {total_turns:,} |")
-lines_out.append(f"| — User-Turns     | {grand_user.turns:,} |")
-lines_out.append(f"| — KI-Turns       | {grand_ai.turns:,} |")
-lines_out.append(f"| Wörter gesamt    | {grand_user.words + grand_ai.words:,} |")
-lines_out.append(f"| — User-Wörter    | {grand_user.words:,} |")
-lines_out.append(f"| — KI-Wörter      | {grand_ai.words:,} |")
-lines_out.append(f"| Zeichen gesamt   | {grand_user.chars + grand_ai.chars:,} |")
-lines_out.append(f"| — User-Zeichen   | {grand_user.chars:,} |")
-lines_out.append(f"| — KI-Zeichen     | {grand_ai.chars:,} |")
+lines_out.append(f"| Files          | {total_files:,} |")
+lines_out.append(f"| Turns total     | {total_turns:,} |")
+lines_out.append(f"| — User turns     | {grand_user.turns:,} |")
+lines_out.append(f"| — AI turns       | {grand_ai.turns:,} |")
+lines_out.append(f"| Words total    | {grand_user.words + grand_ai.words:,} |")
+lines_out.append(f"| — User words    | {grand_user.words:,} |")
+lines_out.append(f"| — AI words      | {grand_ai.words:,} |")
+lines_out.append(f"| Characters total   | {grand_user.chars + grand_ai.chars:,} |")
+lines_out.append(f"| — User characters   | {grand_user.chars:,} |")
+lines_out.append(f"| — AI characters     | {grand_ai.chars:,} |")
 lines_out.append(f"")
 
-# ── Nach Format ───────────────────────────────────────────────────────────────
+# ── By format ───────────────────────────────────────────────────────────────
 lines_out.append(f"---")
 lines_out.append(f"")
-lines_out.append(f"## Nach Format")
+lines_out.append(f"## By format")
 lines_out.append(f"")
-lines_out.append(f"| Format | User-Turns | User-Wörter | User-Zeichen | KI-Turns | KI-Wörter | KI-Zeichen | Wort-Split (U/KI) |")
+lines_out.append(f"| Format | User turns | User words | User characters | AI turns | AI words | AI characters | Word split (U/AI) |")
 lines_out.append(f"|---|---:|---:|---:|---:|---:|---:|---:|")
 
 for fmt in sorted(format_totals):
@@ -305,15 +305,15 @@ for fmt in sorted(format_totals):
 
 lines_out.append(f"")
 
-# ── Nach Datei ────────────────────────────────────────────────────────────────
+# ── By file ────────────────────────────────────────────────────────────────
 lines_out.append(f"---")
 lines_out.append(f"")
-lines_out.append(f"## Nach Datei")
+lines_out.append(f"## By file")
 lines_out.append(f"")
-lines_out.append(f"| Datei | Fmt | User-Turns | User-Wörter | KI-Turns | KI-Wörter | Wort-Split (U/KI) |")
+lines_out.append(f"| File | Fmt | User turns | User words | AI turns | AI words | Word split (U/AI) |")
 lines_out.append(f"|---|---|---:|---:|---:|---:|---:|")
 
-# Sortiert nach KI-Wörter absteigend
+# Sorted by AI words, descending
 for rel_path, s in sorted(all_files, key=lambda x: x[1].ai.words, reverse=True):
     u, a = s.user, s.ai
     u_ratio = u.words / (u.words + a.words) * 100 if (u.words + a.words) else 0
@@ -333,8 +333,8 @@ output_text = "\n".join(lines_out)
 with open(OUTPUT, "w", encoding="utf-8") as f:
     f.write(output_text)
 
-print(f"Fertig — {OUTPUT} geschrieben.")
-print(f"  Dateien:    {total_files:,}")
-print(f"  Turns:      {total_turns:,}  (User: {grand_user.turns:,} / KI: {grand_ai.turns:,})")
-print(f"  Wörter:     {grand_user.words + grand_ai.words:,}  (User: {grand_user.words:,} / KI: {grand_ai.words:,})")
-print(f"  Zeichen:    {grand_user.chars + grand_ai.chars:,}  (User: {grand_user.chars:,} / KI: {grand_ai.chars:,})")
+print(f"Done — {OUTPUT} written.")
+print(f"  Files:      {total_files:,}")
+print(f"  Turns:      {total_turns:,}  (User: {grand_user.turns:,} / AI: {grand_ai.turns:,})")
+print(f"  Words:      {grand_user.words + grand_ai.words:,}  (User: {grand_user.words:,} / AI: {grand_ai.words:,})")
+print(f"  Chars:      {grand_user.chars + grand_ai.chars:,}  (User: {grand_user.chars:,} / AI: {grand_ai.chars:,})")

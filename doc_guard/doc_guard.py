@@ -1,37 +1,37 @@
 #!/usr/bin/env python3
 """
-tools/doc_guard.py — Garmin Local Archive
+doc_guard.py — Needful Things
 
-Read-only Doku-Drift-Detektion (Klasse 2). Schreibt NICHTS in REFERENCE_*.md,
-MAINTENANCE_*.md, README.md oder build_manifest.py — liest sie nur. Die
-einzige Datei, in die dieses Tool schreibt, ist sein eigener Report:
+Read-only doc drift detection (class 2). Writes NOTHING to REFERENCE_*.md,
+MAINTENANCE_*.md, README.md or build_manifest.py — it only reads them. The
+only file this tool writes to is its own report:
 src/docs/DOC_DRIFT_REPORT.md.
 
-Scope (siehe Analyse-Chat v1.6.5.5, "Weg 1" — kein Doku-Rewrite vorher):
+Scope (see analysis chat v1.6.5.5, "Weg 1" ("way 1") — no documentation rewrite beforehand):
 
-  A) SCRIPT_SIGNATURES_BASE-Werte gegen echten Code (hohe Präzision)
-     Für jede Datei in SCRIPT_SIGNATURES_BASE: existiert jede gelistete
-     Signatur ('def foo', 'class Bar', oder eine bare Konstante/Fragment)
-     tatsächlich noch im Quellcode? test_build_output.py prüft nur die
-     Dict-KEYS gegen das Manifest — nicht die Werte gegen den echten Code.
-     Das ist die Lücke, die dieser Check schließt.
+  A) SCRIPT_SIGNATURES_BASE values against the real code (high precision)
+     For every file in SCRIPT_SIGNATURES_BASE: does every listed
+     signature ('def foo', 'class Bar', or a bare constant/fragment)
+     still exist in the source code? test_build_output.py only checks the
+     dict KEYS against the manifest — not the values against the real code.
+     That is the gap this check closes.
 
-  B) Modul-Erwähnung in REFERENCE_*.md (mittlere Präzision, bewusst grob)
-     Für jedes Modul in SHARED_SCRIPTS: taucht der Dateiname, der Stem
-     (ohne .py) oder der volle Pfad als Backtick-Text irgendwo in
-     irgendeiner REFERENCE_*.md auf — Überschriften UND Tabellenzellen
-     (z.B. Plugin-Tabellen). Keine Datei-Zuordnung (maps/ verteilt sich
-     ohnehin über drei Dateien) — nur "irgendwo dokumentiert" vs. "nirgends
-     erwähnt". Findet fehlende Doku, nicht veraltete Doku.
+  B) Module mention in REFERENCE_*.md (medium precision, deliberately coarse)
+     For every module in SHARED_SCRIPTS: does the file name, the stem
+     (without .py) or the full path appear as backtick text anywhere in
+     any REFERENCE_*.md — headings AND table cells
+     (e.g. plugin tables). No file assignment (maps/ is spread over three
+     files anyway) — only "documented somewhere" vs. "mentioned
+     nowhere". Finds missing documentation, not outdated documentation.
 
-  C) Test-Counts MAINTENANCE_*.md gegen docs/METRICS.md (hohe Präzision)
-     Bestätigtes Format: "**Current count: N checks, M sections.**"
+  C) Test counts MAINTENANCE_*.md against docs/METRICS.md (high precision)
+     Confirmed format: "**Current count: N checks, M sections.**"
 
-  D) Modul-Erwähnung in README.md (niedrige Präzision)
-     Reiner Substring-Test über die gesamte Datei.
+  D) Module mention in README.md (low precision)
+     Pure substring test over the whole file.
 
-Läuft lokal bei Timo — kein Teil von SHARED_SCRIPTS, kein Teil des Builds.
-Reines stdlib, keine externen Abhängigkeiten.
+Runs locally on the maintainer's machine — not part of SHARED_SCRIPTS, not part of the build.
+Pure stdlib, no external dependencies.
 """
 
 import ast
@@ -40,17 +40,17 @@ import sys
 import tempfile
 from pathlib import Path
 
-# ── Pfade ──────────────────────────────────────────────────────────────────────
-# Gleiche Konvention wie apply_anchors.py und generate_metrics.py — Pfad
-# relativ zum Script-Standort, kein hart codierter absoluter Pfad.
+# ── Paths ──────────────────────────────────────────────────────────────────────
+# Same convention as apply_anchors.py and generate_metrics.py — path
+# relative to the script location, no hard-coded absolute path.
 SCRIPT_DIR   = Path(__file__).parent.resolve()
-PROJECT_ROOT = (SCRIPT_DIR / "../garmin_collector-1_work").resolve()
+PROJECT_ROOT = (SCRIPT_DIR / "../my_project").resolve()   # adjust to your project
 SRC_DIR      = PROJECT_ROOT / "src"
 DOCS_DIR     = SRC_DIR / "docs"
 
 BUILD_MANIFEST = SRC_DIR / "compiler" / "build_manifest.py"
 METRICS_FILE   = DOCS_DIR / "METRICS.md"
-README_FILE    = SRC_DIR.parent / "README.md"   # liegt eine Ebene über src/ (v1.6.0.1)
+README_FILE    = SRC_DIR.parent / "README.md"   # lives one level above src/ (v1.6.0.1)
 
 REFERENCE_FILES = [
     DOCS_DIR / "REFERENCE_GARMIN.md",
@@ -60,8 +60,8 @@ REFERENCE_FILES = [
     DOCS_DIR / "REFERENCE_GLOBAL.md",
 ]
 
-# MAINTENANCE-Datei → welche(s) test_*.py-Suite(n) sie dokumentiert
-# (aus FINAL_DOKU_PROMPT_v2.md Schritt 6 — stabile, dokumentierte Konvention)
+# MAINTENANCE file → which test_*.py suite(s) it documents
+# (from FINAL_DOKU_PROMPT_v2.md step 6 — stable, documented convention)
 MAINTENANCE_FILES = [
     DOCS_DIR / "MAINTENANCE_GARMIN.md",
     DOCS_DIR / "MAINTENANCE_CONTEXT.md",
@@ -84,14 +84,14 @@ _BACKTICK_RE = re.compile(r'`([^`]+)`')
 
 
 class GuardError(Exception):
-    """Unerwarteter Fehler beim Lesen — Report wird trotzdem geschrieben (finally)."""
+    """Unexpected error while reading — the report is still written (finally)."""
 
 
-# ── A) SCRIPT_SIGNATURES_BASE gegen echten Code ───────────────────────────────
+# ── A) SCRIPT_SIGNATURES_BASE against real code ───────────────────────────────
 
 def load_build_manifest() -> tuple[list[str], dict[str, list[str]]]:
     if not BUILD_MANIFEST.exists():
-        raise GuardError(f"build_manifest.py nicht gefunden: {BUILD_MANIFEST}")
+        raise GuardError(f"build_manifest.py not found: {BUILD_MANIFEST}")
 
     source = BUILD_MANIFEST.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(BUILD_MANIFEST))
@@ -117,9 +117,9 @@ def load_build_manifest() -> tuple[list[str], dict[str, list[str]]]:
                     pass
 
     if shared_scripts is None:
-        raise GuardError("SHARED_SCRIPTS nicht gefunden/nicht literal auswertbar")
+        raise GuardError("SHARED_SCRIPTS not found / not evaluable as a literal")
     if signatures is None:
-        raise GuardError("SCRIPT_SIGNATURES_BASE nicht gefunden/nicht literal auswertbar")
+        raise GuardError("SCRIPT_SIGNATURES_BASE not found / not evaluable as a literal")
 
     return shared_scripts, signatures
 
@@ -141,9 +141,9 @@ def _extract_class_names(tree: ast.Module) -> set[str]:
 
 
 def check_signatures(signatures: dict[str, list[str]]) -> list[dict]:
-    """Prüft jede Signatur-Zeichenkette gegen den echten Quellcode.
+    """Checks every signature string against the real source code.
 
-    Rückgabe: Liste von {"module", "signature", "status", "detail"}.
+    Returns: list of {"module", "signature", "status", "detail"}.
     status: "ok" | "missing" | "file_missing"
     """
     results = []
@@ -154,7 +154,7 @@ def check_signatures(signatures: dict[str, list[str]]) -> list[dict]:
             for sig in sig_list:
                 results.append({
                     "module": module_path, "signature": sig,
-                    "status": "file_missing", "detail": "Datei existiert nicht",
+                    "status": "file_missing", "detail": "File does not exist",
                 })
             continue
 
@@ -176,7 +176,7 @@ def check_signatures(signatures: dict[str, list[str]]) -> list[dict]:
                 results.append({
                     "module": module_path, "signature": sig,
                     "status": "missing",
-                    "detail": f"Datei nicht parsbar (SyntaxError: {parse_error})",
+                    "detail": f"File not parsable (SyntaxError: {parse_error})",
                 })
                 continue
 
@@ -187,27 +187,27 @@ def check_signatures(signatures: dict[str, list[str]]) -> list[dict]:
                 name = sig_stripped[6:].split("(")[0].split(":")[0].strip()
                 ok = name in class_names
             else:
-                # Konstanten / Fragmente (z.B. 'QUALITY_LOCK', 'GARMIN_EMAIL',
-                # 'from quality._maint import') — einfacher Substring-Fallback.
+                # Constants / fragments (e.g. 'QUALITY_LOCK', 'GARMIN_EMAIL',
+                # 'from quality._maint import') — simple substring fallback.
                 ok = sig_stripped in raw_text
 
             results.append({
                 "module": module_path, "signature": sig,
                 "status": "ok" if ok else "missing",
-                "detail": "" if ok else "Signatur nicht im Quellcode gefunden",
+                "detail": "" if ok else "Signature not found in the source code",
             })
 
     return results
 
 
-# ── B) Modul-Erwähnung in REFERENCE_*.md ───────────────────────────────────────
+# ── B) Module mention in REFERENCE_*.md ───────────────────────────────────────
 
 def collect_reference_mentions() -> set[str]:
-    """Sammelt alle Backtick-Tokens aus REFERENCE_*.md — nicht nur aus
-    Überschriften, sondern aus der gesamten Datei (Tabellenzellen
-    eingeschlossen, z.B. Plugin-Tabellen wie in REFERENCE_CONTEXT.md).
-    Bewusst breiter als reine Heading-Suche — 'dokumentiert irgendwo',
-    nicht 'hat eine eigene Sektion'."""
+    """Collects all backtick tokens from REFERENCE_*.md — not only from
+    headings, but from the whole file (table cells
+    included, e.g. plugin tables as in REFERENCE_CONTEXT.md).
+    Deliberately broader than a pure heading search — 'documented somewhere',
+    not 'has its own section'."""
     tokens: set[str] = set()
     for ref_file in REFERENCE_FILES:
         if not ref_file.exists():
@@ -226,11 +226,11 @@ def check_reference_coverage(shared_scripts: list[str]) -> tuple[list[dict], lis
     for module_path in shared_scripts:
         filename = Path(module_path).name          # e.g. "garmin_utils.py"
         if filename == "__init__.py":
-            continue   # strukturelle Marker-Datei, nirgends einzeln dokumentiert
+            continue   # structural marker file, not documented individually anywhere
         stem = Path(module_path).stem               # e.g. "garmin_utils"
-        # Vollen Pfad zusätzlich prüfen — deckt Fälle wie
-        # '## `layouts/reference_ranges.py`' ab, wo der Ordner Teil des
-        # Heading-Texts ist und Dateiname/Stem allein nicht matchen.
+        # Additionally check the full path — covers cases like
+        # '## `layouts/reference_ranges.py`' where the folder is part of the
+        # heading text and the file name/stem alone do not match.
         found = (
             filename in mentions
             or stem in mentions
@@ -244,10 +244,10 @@ def check_reference_coverage(shared_scripts: list[str]) -> tuple[list[dict], lis
     return results, missing_files
 
 
-# ── C) Test-Counts MAINTENANCE_*.md gegen docs/METRICS.md ─────────────────────
+# ── C) Test counts MAINTENANCE_*.md against docs/METRICS.md ─────────────────────
 
 def load_metrics_counts() -> dict[str, int]:
-    """Liest die Suite-Totals aus docs/METRICS.md (eigenes, bekanntes Format)."""
+    """Reads the suite totals from docs/METRICS.md (own, known format)."""
     if not METRICS_FILE.exists():
         return {}
 
@@ -261,8 +261,8 @@ def load_metrics_counts() -> dict[str, int]:
 
 
 def check_test_counts(metrics_counts: dict[str, int]) -> list[dict]:
-    """Für jede MAINTENANCE_*.md: findet 'Current count'-Zeilen, ordnet sie
-    der nächstgelegenen vorherigen test_*.py-Erwähnung zu, vergleicht gegen
+    """For every MAINTENANCE_*.md: finds 'Current count' lines, assigns them
+    to the nearest preceding test_*.py mention, compares against
     METRICS.md."""
     results = []
 
@@ -270,7 +270,7 @@ def check_test_counts(metrics_counts: dict[str, int]) -> list[dict]:
         if not maint_file.exists():
             results.append({
                 "file": maint_file.name, "test_file": None,
-                "status": "file_missing", "detail": "Datei existiert nicht",
+                "status": "file_missing", "detail": "File does not exist",
             })
             continue
 
@@ -280,10 +280,10 @@ def check_test_counts(metrics_counts: dict[str, int]) -> list[dict]:
         matches_in_file = 0
 
         for line in lines:
-            # Count-Match zuerst gegen den BISHERIGEN last_test_file prüfen —
-            # nicht gegen eine evtl. beiläufige Testdatei-Erwähnung in
-            # derselben Zeile (z.B. "... Does NOT duplicate `test_app_logic.py`"
-            # innerhalb der Count-Zeile für eine ANDERE Datei).
+            # Check the count match first against the PREVIOUS last_test_file —
+            # not against a possible incidental test-file mention in
+            # the same line (e.g. "... Does NOT duplicate `test_app_logic.py`"
+            # inside the count line for ANOTHER file).
             cm = _CURRENT_COUNT_RE.search(line)
             sm = _CHECK_COUNT_SPLIT_RE.search(line)
             match = cm or sm
@@ -297,41 +297,41 @@ def check_test_counts(metrics_counts: dict[str, int]) -> list[dict]:
                     results.append({
                         "file": maint_file.name, "test_file": last_test_file,
                         "status": "no_metrics_data",
-                        "detail": f"docs/METRICS.md hat keinen Eintrag für {last_test_file}",
+                        "detail": f"docs/METRICS.md has no entry for {last_test_file}",
                     })
                 elif documented_count == metrics_count:
                     results.append({
                         "file": maint_file.name, "test_file": last_test_file,
                         "status": "ok",
-                        "detail": f"{documented_count} checks — stimmt",
+                        "detail": f"{documented_count} checks — matches",
                     })
                 else:
                     results.append({
                         "file": maint_file.name, "test_file": last_test_file,
                         "status": "drift",
-                        "detail": f"Doku: {documented_count}, METRICS.md: {metrics_count}",
+                        "detail": f"Docs: {documented_count}, METRICS.md: {metrics_count}",
                     })
 
-            # Erst NACH der Count-Auswertung dieser Zeile last_test_file
-            # aktualisieren — betrifft dann erst nachfolgende Zeilen.
+            # Update last_test_file only AFTER the count evaluation of this line
+            # — so it only affects subsequent lines.
             tm = _TEST_FILE_MENTION_RE.search(line)
             if tm:
                 last_test_file = tm.group(0)
 
         if matches_in_file == 0:
-            # Unterscheidung: steht überhaupt ein Count-Claim in der Datei
-            # (dann ist das Format nur unerkannt — echte Warnung), oder wird
-            # gar keine Zahl behauptet (dann gibt es nichts zu prüfen — die
-            # Datei verweist implizit auf docs/METRICS.md als Quelle, kein
-            # Drift-Risiko, keine Warnung nötig)?
+            # Distinction: is there a count claim in the file at all
+            # (then the format is merely unrecognized — a real warning), or is
+            # no number claimed at all (then there is nothing to check — the
+            # file implicitly refers to docs/METRICS.md as its source, no
+            # drift risk, no warning needed)?
             if _ANY_COUNT_CLAIM_RE.search(raw_text):
                 results.append({
                     "file": maint_file.name, "test_file": None,
                     "status": "no_match_found",
                     "detail": (
-                        "Datei enthält 'Current count'/'Check count', aber kein "
-                        "bekanntes Format konnte es einer test_*.py-Datei zuordnen. "
-                        "Neues Format? NICHT geprüft, nicht 'sauber'."
+                        "File contains 'Current count'/'Check count', but no "
+                        "known format could assign it to a test_*.py file. "
+                        "New format? NOT checked, not 'clean'."
                     ),
                 })
             else:
@@ -339,15 +339,15 @@ def check_test_counts(metrics_counts: dict[str, int]) -> list[dict]:
                     "file": maint_file.name, "test_file": None,
                     "status": "no_count_claimed",
                     "detail": (
-                        "Datei behauptet keine Test-Count-Zahl — nichts zu prüfen, "
-                        "kein Drift-Risiko. docs/METRICS.md ist die Quelle."
+                        "File claims no test count number — nothing to check, "
+                        "no drift risk. docs/METRICS.md is the source."
                     ),
                 })
 
     return results
 
 
-# ── D) Modul-Erwähnung in README.md ────────────────────────────────────────────
+# ── D) Module mention in README.md ────────────────────────────────────────────
 
 def check_readme_coverage(shared_scripts: list[str]) -> tuple[list[dict], bool]:
     if not README_FILE.exists():
@@ -358,7 +358,7 @@ def check_readme_coverage(shared_scripts: list[str]) -> tuple[list[dict], bool]:
     for module_path in shared_scripts:
         filename = Path(module_path).name
         if filename == "__init__.py":
-            continue   # strukturelle Marker-Datei, nirgends einzeln dokumentiert
+            continue   # structural marker file, not documented individually anywhere
         stem = Path(module_path).stem
         found = filename in text or stem in text
         results.append({
@@ -495,16 +495,16 @@ def main() -> int:
 
     except GuardError as e:
         content = f"<!-- doc_guard.py aborted: {e} -->\n\n# DOC_DRIFT_REPORT\n\nAborted: {e}\n"
-        print(f"✗ Guard-Fehler: {e}", file=sys.stderr)
+        print(f"✗ Guard error: {e}", file=sys.stderr)
         return 1
 
     finally:
-        # try/finally analog zum test_critical_archive-Konzept — Report wird
-        # in jedem Fall geschrieben, auch bei unerwartetem Fehler oberhalb.
+        # try/finally analogous to the test_critical_archive concept — the report is
+        # written in every case, even on an unexpected error above.
         write_report(content)
 
-    print(f"✓ {OUTPUT_FILE} geschrieben.")
-    print("  Drift gefunden." if any_drift else "  Kein Drift gefunden.")
+    print(f"✓ {OUTPUT_FILE} written.")
+    print("  Drift found." if any_drift else "  No drift found.")
     return 1 if any_drift else 0
 
 

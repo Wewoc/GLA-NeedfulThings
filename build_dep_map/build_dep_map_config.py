@@ -1,6 +1,6 @@
 """
 build_dep_map_config.py
-needfull things — Dependency Map Generator · Configuration
+Needful Things — Dependency Map Generator · Configuration
 
 Location: build_dep_map/
 Usage:    run_dep_map.bat  (or: python build_dep_map.py)
@@ -74,4 +74,27 @@ KNOWN_EXTERNAL = [
     "pandas",
     "pytest",
     "ruff",
+]
+
+# ── Accepted GEKIPPT transitions ─────────────────────────────────────────────
+# Handlers that deliberately do NOT pass the error on via raise/reraise but via
+# a structured return value (dict field, tuple position, result list) —
+# verified end to end up to the caller.
+# The classification heuristic in build_dep_map.py only knows "raise/reraise"
+# as "ok" and therefore classifies this pattern as a GEKIPPT regression, even
+# though the error is in fact made visible — just not via an exception.
+#
+# An entry takes the finding out of the GEKIPPT-regression blocker count
+# WITHOUT making it disappear from dep_map_delta.md — it still appears there,
+# in its own clearly marked section.
+#
+# Format per entry: (module_relpath, function_name, exception_type_string, reason)
+# module_relpath exactly as shown in dep_map_delta.md ("via" is not needed).
+# When in doubt, keep it narrow (the exact function) rather than broad (a
+# whole module).
+# Default: no entries.
+
+ACCEPTED_GEKIPPT = [
+    # ("pkg/module.py", "function_name", "Exception",
+    #  "Error is returned via the 'error' field of the result dict and shown in the UI."),
 ]

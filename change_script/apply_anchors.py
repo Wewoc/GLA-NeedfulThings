@@ -1,36 +1,33 @@
 """
-apply_anchors.py — Garmin Local Archive
-Automatisiertes Einpflegen von Claude-gelieferten Anchor-Blöcken.
+apply_anchors.py — Needful Things
+Applies Claude-delivered anchor blocks to project files automatically.
 
-Ablauf:
-  Pass 1 — Alle ALT-Blöcke suchen, vollständig durchlaufen, Fehler sammeln
-  Pass 2 — Nur bei 100% Pass 1: alle NEU-Blöcke einpflegen
+Flow:
+  Pass 1 — locate every ALT block, run through all of them, collect errors
+  Pass 2 — only if Pass 1 was 100% successful: apply all NEU blocks
 
-Aufruf: python apply_anchors.py
-Eingabe: anchor_delivery.md (im selben Ordner wie dieses Script)
-Ziel:    ../garmin_collector-1_work/ (relativ zum Script-Standort)
+Call:   python apply_anchors.py
+Input:  anchor_delivery.md (in the same folder as this script)
+Target: ../my_project/ (relative to the script location — set PROJECT_ROOT below)
 
-v1.6.5.5-fix: FENCE-Regex verlangt jetzt, dass die schließende Fence
-dieselbe Backtick-Anzahl hat wie die öffnende (Backreference \1) —
-vorher wurde jede beliebige Dreifach-Backtick-Folge als Ende akzeptiert,
-was bei NEU-Blöcken mit eingebetteten ```python-Codebeispielen zu
-stillschweigend abgeschnittenem Inhalt führte (kein Fehler, kein Hinweis
-— einfach ein zu kurzer Treffer). Ursache + Reproduktion: Session
-v1.6.5.5, Doku-Automatisierung.
+v1.6.5.5 fix: the FENCE regex now requires the closing fence to have the
+same number of backticks as the opening one (backreference \1) —
+previously any triple-backtick sequence was accepted as the end, which
+silently truncated NEU blocks that contained embedded ```python code
+examples (no error, no notice — just a match that was too short). Cause +
+reproduction: session v1.6.5.5, documentation automation.
 
-v1.6.6-Änderung: Der v1.6.5.5-Fix schützt nur, wenn die äußere Wrapper-
-Fence mehr Backticks hat als jede Fence im Blockinhalt selbst — das
-musste man beim Schreiben der Delivery manuell einhalten und wurde bei
-Doku-Blöcken mit eingebetteten ```-Beispielen regelmäßig übersehen
-(gleiche Symptomatik wie oben: still abgeschnittener oder falsch
-zugeordneter Inhalt, kein Fehler). Neuer, bevorzugter Weg: eindeutige
-Sentinel-Marker <<<ALT>>>/<<<ALT_END>>> und <<<NEU>>>/<<<NEU_END>>>,
-die nie mit Markdown-/Code-Fences im Inhalt kollidieren können, weil
-danach per exaktem String gesucht wird statt nach einer inhaltlich
-passenden Gegen-Fence. Alte, reine Backtick-Fence-Deliveries werden
-weiterhin als Fallback unterstützt (Abwärtskompatibilität) — Marker
-werden zuerst versucht, erst wenn keine da sind, greift die alte
-FENCE-Logik.
+v1.6.6 change: the v1.6.5.5 fix only protects when the outer wrapper
+fence has more backticks than any fence inside the block content — that
+had to be observed manually when writing the delivery and was regularly
+overlooked for documentation blocks with embedded ``` examples (same
+symptom as above: silently truncated or misassigned content, no error).
+New, preferred way: unique sentinel markers <<<ALT>>>/<<<ALT_END>>> and
+<<<NEU>>>/<<<NEU_END>>>, which can never collide with Markdown/code fences
+in the content, because they are searched by exact string instead of by a
+matching closing fence. Old, plain backtick-fence deliveries are still
+supported as a fallback (backward compatibility) — markers are tried
+first, the old FENCE logic only applies when none are present.
 """
 
 from pathlib import Path
@@ -40,7 +37,7 @@ import sys
 # ── Pfade ────────────────────────────────────────────────────────────────────
 
 SCRIPT_DIR   = Path(__file__).parent.resolve()
-PROJECT_ROOT = (SCRIPT_DIR / "../garmin_collector-1_work").resolve()
+PROJECT_ROOT = (SCRIPT_DIR / "../my_project").resolve()   # adjust to your project
 DELIVERY_MD  = SCRIPT_DIR / "anchor_delivery.md"
 
 DELETE_MARKER = "#DELETE"
@@ -49,32 +46,32 @@ DELETE_MARKER = "#DELETE"
 
 def parse_delivery(md_path: Path) -> list[dict] | str:
     """
-    Liest anchor_delivery.md und gibt eine Liste von Anchor-Dicts zurück.
-    Bei Parsefehler: String mit Fehlermeldung.
+    Reads anchor_delivery.md and returns a list of anchor dicts.
+    On a parse error: a string with the error message.
 
-    Jedes Dict:
-        file  — relativer Pfad ab Projektroot (str)
-        alt   — ALT-Block Inhalt (str, roh aus MD)
-        neu   — NEU-Block Inhalt (str, roh) oder DELETE_MARKER
-        index — globaler Index (1-basiert, wird nach Parse gesetzt)
+    Each dict:
+        file  — path relative to the project root (str)
+        alt   — ALT block content (str, raw from the MD)
+        neu   — NEU block content (str, raw) or DELETE_MARKER
+        index — global index (1-based, set after parsing)
     """
     text = md_path.read_text(encoding="utf-8")
 
-    # Fenced code block: (`{3,})optional_lang\n...\n<dieselbe Backtick-Anzahl>
-    # Backreference \1 erzwingt: schließende Fence == öffnende Fence-Länge.
-    # Das erlaubt verschachtelte Codeblöcke im NEU-Inhalt (z.B. ein
-    # eingebettetes ```python-Beispiel), solange die äußere Wrapper-Fence
-    # länger ist (z.B. ````) als jede innere Fence im Inhalt.
+    # Fenced code block: (`{3,})optional_lang\n...\n<same number of backticks>
+    # Backreference \1 enforces: closing fence length == opening fence length.
+    # This allows nested code blocks in the NEU content (e.g. an
+    # embedded ```python example), as long as the outer wrapper fence
+    # is longer (e.g. ````) than any inner fence in the content.
     FENCE = re.compile(r"^(`{3,})[^\n]*\n(.*?)^\1[ \t]*$", re.DOTALL | re.MULTILINE)
 
-    # Marker-basierte Extraktion (bevorzugt, siehe v1.6.6-Kommentar oben).
-    # Exakte Sentinel-Zeilen statt Backtick-Zählerei — kollidiert nie mit
-    # verschachtelten Fences im Blockinhalt.
+    # Marker-based extraction (preferred, see the v1.6.6 note above).
+    # Exact sentinel lines instead of counting backticks — never collides with
+    # nested fences in the block content.
     ALT_MARKER = re.compile(r"<<<ALT>>>[ \t]*\n(.*?)\n[ \t]*<<<ALT_END>>>", re.DOTALL)
     NEU_MARKER = re.compile(r"<<<NEU>>>[ \t]*\n(.*?)\n[ \t]*<<<NEU_END>>>", re.DOTALL)
 
     def extract_block(section_text, marker_re):
-        """Blockinhalt holen — zuerst per Sentinel-Marker, sonst Fence-Fallback."""
+        """Get the block content — first via sentinel marker, otherwise fence fallback."""
         m = marker_re.search(section_text)
         if m:
             return m.group(1)
@@ -86,7 +83,7 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
     anchors = []
     errors  = []
 
-    # Aufteilen nach ## FILE: Sektionen
+    # Split into ## FILE: sections
     sections = re.split(r"^## FILE:\s*", text, flags=re.MULTILINE)
 
     for section in sections:
@@ -97,24 +94,24 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
         file_path = lines[0].strip()
         body      = "".join(lines[1:])
 
-        # ALT / NEU Blöcke innerhalb der Sektion finden
-        # Mehrere ALT/NEU-Paare pro Datei erlaubt
+        # Find ALT / NEU blocks within the section
+        # Multiple ALT/NEU pairs per file are allowed
         alt_positions = [m.start() for m in re.finditer(r"^### ALT", body, re.MULTILINE)]
         neu_positions = [m.start() for m in re.finditer(r"^### NEU", body, re.MULTILINE)]
 
         if len(alt_positions) != len(neu_positions):
-            errors.append(f"  ✗  {file_path} — ALT/NEU Anzahl stimmt nicht überein")
+            errors.append(f"  ✗  {file_path} — ALT/NEU count does not match")
             continue
 
         for alt_pos, neu_pos in zip(alt_positions, neu_positions):
-            # ALT-Block extrahieren
+            # Extract the ALT block
             alt_section = body[alt_pos:neu_pos]
             alt_content = extract_block(alt_section, ALT_MARKER)
             if alt_content is None:
-                errors.append(f"  ✗  {file_path} — ALT-Block ohne Marker/Fence gefunden")
+                errors.append(f"  ✗  {file_path} — ALT block found without marker/fence")
                 continue
 
-            # NEU-Block extrahieren (bis nächsten ## FILE: / ### ALT oder Ende)
+            # Extract the NEU block (up to the next ## FILE: / ### ALT or the end)
             next_boundary = len(body)
             for pos in alt_positions:
                 if pos > neu_pos:
@@ -123,16 +120,16 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
             neu_section = body[neu_pos:next_boundary]
             neu_content = extract_block(neu_section, NEU_MARKER)
             if neu_content is None:
-                errors.append(f"  ✗  {file_path} — NEU-Block ohne Marker/Fence gefunden")
+                errors.append(f"  ✗  {file_path} — NEU block found without marker/fence")
                 continue
 
-            # Leerer NEU-Block ohne #DELETE → Fehler
+            # Empty NEU block without #DELETE → error
             neu_stripped = neu_content.strip()
             if neu_stripped == "":
-                errors.append(f"  ✗  {file_path} — NEU-Block ist leer (für Löschung: #DELETE verwenden)")
+                errors.append(f"  ✗  {file_path} — NEU block is empty (use #DELETE for a deletion)")
                 continue
 
-            # #DELETE normalisieren
+            # Normalize #DELETE
             if neu_stripped == DELETE_MARKER:
                 neu_content = DELETE_MARKER
 
@@ -140,54 +137,54 @@ def parse_delivery(md_path: Path) -> list[dict] | str:
                 "file"  : file_path,
                 "alt"   : alt_content,
                 "neu"   : neu_content,
-                "index" : 0,  # wird unten gesetzt
+                "index" : 0,  # set below
             })
 
     if errors:
         return "Parsefehler:\n" + "\n".join(errors)
 
-    # Globale Nummerierung
+    # Global numbering
     for i, anchor in enumerate(anchors, start=1):
         anchor["index"] = i
 
     return anchors
 
-# ── Normalisierung für Vergleich ──────────────────────────────────────────────
+# ── Normalization for comparison ──────────────────────────────────────────────
 
 def normalize_for_match(text: str) -> str:
     """
-    Nur für den Vergleich — Original bleibt unberührt.
+    For comparison only — the original stays untouched.
     - CRLF → LF
-    - Trailing whitespace pro Zeile entfernen
-    - Leading/trailing Leerzeilen entfernen
+    - Strip trailing whitespace per line
+    - Strip leading/trailing blank lines
     """
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = [line.rstrip() for line in text.split("\n")]
-    # Leading Leerzeilen entfernen
+    # Remove leading blank lines
     while lines and lines[0] == "":
         lines.pop(0)
-    # Trailing Leerzeilen entfernen
+    # Remove trailing blank lines
     while lines and lines[-1] == "":
         lines.pop()
     return "\n".join(lines)
 
-# ── Zeilenenden detektieren ───────────────────────────────────────────────────
+# ── Detect line endings ───────────────────────────────────────────────────
 
 def detect_line_ending(raw: str) -> str:
-    """Gibt '\r\n' oder '\n' zurück — je nachdem was in der Datei dominiert."""
+    """Returns '\r\n' or '\n' — whichever dominates in the file."""
     crlf = raw.count("\r\n")
     lf   = raw.count("\n") - crlf
     return "\r\n" if crlf >= lf else "\n"
 
-# ── Pass 1 — Suche ───────────────────────────────────────────────────────────
+# ── Pass 1 — Search ───────────────────────────────────────────────────────────
 
 def pass1(anchors: list[dict], total: int) -> list[dict]:
     """
-    Sucht jeden ALT-Block in der Zieldatei.
-    Gibt Liste der Fehler zurück (leer = 100% OK).
-    Setzt anchor['status'] für jeden Anchor.
+    Searches every ALT block in the target file.
+    Returns the list of errors (empty = 100% OK).
+    Sets anchor['status'] for every anchor.
     """
-    # Dateipfade für Kopfzeile sammeln
+    # Collect file paths for the header
     files = sorted(set(a["file"] for a in anchors))
     print(f"\nPass 1 — Searching {total} anchors in {len(files)} files ...\n")
 
@@ -200,7 +197,7 @@ def pass1(anchors: list[dict], total: int) -> list[dict]:
         label     = f"  [{idx}/{total}]"
         col_path  = rel_path.ljust(55)
 
-        # Datei existiert?
+        # Does the file exist?
         if not abs_path.is_file():
             msg = f"  ✗  {col_path} {label} FILE NOT FOUND"
             print(msg)
@@ -208,12 +205,31 @@ def pass1(anchors: list[dict], total: int) -> list[dict]:
             anchor["status"] = "FILE_NOT_FOUND"
             continue
 
-        # Datei lesen
+        # Read the file
         raw = abs_path.read_text(encoding="utf-8", errors="replace")
 
-        # Normalisieren für Vergleich
+        # Normalize for comparison
         norm_file = normalize_for_match(raw)
         norm_alt  = normalize_for_match(anchor["alt"])
+
+        # ── Idempotence check ─────────────────────────────────────────────
+        # If NEU (not #DELETE) is already completely present in the document,
+        # this anchor was applied before — e.g. because NEU = ALT + appended
+        # text and a second run would otherwise duplicate the addition. Not an
+        # error, but a skip: the anchor is taken out of the overlap check and
+        # out of Pass 2.
+        if anchor["neu"] != DELETE_MARKER:
+            norm_neu = normalize_for_match(anchor["neu"])
+            neu_present = bool(norm_neu) and norm_file.count(norm_neu) > 0
+            # If NEU contains ALT (pure append), NEU being present in the
+            # document is enough. Otherwise ALT must be gone as well: while ALT
+            # is still there, NEU is only a part of ALT (trimming) or happens to
+            # occur elsewhere — the anchor has not been applied yet.
+            if neu_present and (norm_alt in norm_neu or norm_file.count(norm_alt) == 0):
+                msg = f"  ⏭  {col_path} {label} ALREADY APPLIED — skip"
+                print(msg)
+                anchor["status"] = "ALREADY_APPLIED"
+                continue
 
         count = norm_file.count(norm_alt)
 
@@ -228,7 +244,7 @@ def pass1(anchors: list[dict], total: int) -> list[dict]:
             errors.append(msg)
             anchor["status"] = "AMBIGUOUS"
         else:
-            # Position per Sliding Window ermitteln — für Overlap-Check
+            # Determine the position via sliding window — for the overlap check
             alt_lines       = normalize_for_match(anchor["alt"]).split("\n")
             file_lines_norm = [l.rstrip("\r\n").rstrip() for l in raw.splitlines(keepends=True)]
             line_start = None
@@ -241,13 +257,13 @@ def pass1(anchors: list[dict], total: int) -> list[dict]:
             print(f"  ✓  {col_path} {label} located")
             anchor["status"] = "OK"
 
-    # ── Overlap-Check — pro Datei alle OK-Anchors auf Überschneidung prüfen ──
+    # ── Overlap check — check all OK anchors per file for overlaps ──
     from itertools import combinations
     files_in_delivery = sorted(set(a["file"] for a in anchors))
     for file_path in files_in_delivery:
         ok_anchors = [a for a in anchors if a["file"] == file_path and a.get("status") == "OK"]
         for a, b in combinations(ok_anchors, 2):
-            # Overlap wenn: start_a < end_b AND start_b < end_a
+            # Overlap if: start_a < end_b AND start_b < end_a
             if (a["line_start"] is not None and b["line_start"] is not None
                     and a["line_start"] < b["line_end"]
                     and b["line_start"] < a["line_end"]):
@@ -264,8 +280,8 @@ def pass1(anchors: list[dict], total: int) -> list[dict]:
 
 def pass2(anchors: list[dict], total: int) -> None:
     """
-    Pflegt jeden Anchor in die Zieldatei ein.
-    Liest Datei nach jedem Replace neu — auch bei mehreren Anchors pro Datei.
+    Applies every anchor to the target file.
+    Re-reads the file after every replace — also with several anchors per file.
     """
     print(f"\nPass 2 — Applying ...\n")
 
@@ -276,24 +292,28 @@ def pass2(anchors: list[dict], total: int) -> None:
         label    = f"  [{idx}/{total}]"
         col_path = rel_path.ljust(55)
 
-        # Frisch lesen (newline='' um rohe Zeilenenden zu erhalten)
+        if anchor.get("status") == "ALREADY_APPLIED":
+            print(f"  ⏭  {col_path} {label} skipped (already applied)")
+            continue
+
+        # Read fresh (newline='' to preserve the raw line endings)
         with open(abs_path, encoding="utf-8", errors="replace", newline="") as fh:
             raw = fh.read()
         line_end = detect_line_ending(raw)
 
-        # Für Suche normalisieren
+        # Normalize for the search
         norm_file = normalize_for_match(raw)
         norm_alt  = normalize_for_match(anchor["alt"])
 
-        # Position im normalisierten Text finden → auf Original zurückrechnen
-        # Strategie: ALT-Block im Original durch schrittweisen Vergleich finden
-        # Zuverlässiger Weg: Original zeilenweise normalisieren und Block suchen
+        # Find the position in the normalized text → map back to the original
+        # Strategy: find the ALT block in the original by stepwise comparison
+        # Reliable way: normalize the original line by line and search for the block
 
         alt_lines  = norm_alt.split("\n")
         file_lines_raw  = raw.splitlines(keepends=True)
         file_lines_norm = [l.rstrip("\r\n").rstrip() for l in file_lines_raw]
 
-        # Sliding window über die normalisierten Zeilen
+        # Sliding window over the normalized lines
         start_idx = None
         for i in range(len(file_lines_norm) - len(alt_lines) + 1):
             window = file_lines_norm[i:i + len(alt_lines)]
@@ -302,51 +322,51 @@ def pass2(anchors: list[dict], total: int) -> None:
                 break
 
         if start_idx is None:
-            # Sollte durch Pass 1 ausgeschlossen sein
+            # Should have been ruled out by Pass 1
             print(f"  ✗  {col_path} {label} ERROR (not found in Pass 2 — skip)")
             continue
 
         end_idx = start_idx + len(alt_lines)
 
-        # NEU-Block vorbereiten
+        # Prepare the NEU block
         if anchor["neu"] == DELETE_MARKER:
             new_lines = []
         else:
-            # NEU-Block auf Zeilenenden der Zieldatei normalisieren
+            # Normalize the NEU block to the target file's line endings
             neu_normalized = anchor["neu"].replace("\r\n", "\n").replace("\r", "\n")
             neu_line_list  = neu_normalized.split("\n")
-            # Trailing leere Zeile aus dem Fenced Block entfernen
+            # Remove the trailing empty line from the fenced block
             if neu_line_list and neu_line_list[-1] == "":
                 neu_line_list = neu_line_list[:-1]
             new_lines = [l + line_end for l in neu_line_list]
 
-        # Zusammenbauen
+        # Assemble
         result_lines = file_lines_raw[:start_idx] + new_lines + file_lines_raw[end_idx:]
         result       = "".join(result_lines)
 
         abs_path.write_text(result, encoding="utf-8", newline="")
         print(f"  ✓  {col_path} {label} applied")
 
-# ── Hauptprogramm ─────────────────────────────────────────────────────────────
+# ── Main program ─────────────────────────────────────────────────────────────
 
 def main() -> None:
     print("=" * 65)
-    print("  apply_anchors.py — Garmin Local Archive")
+    print("  apply_anchors.py — Needful Things")
     print("=" * 65)
     print(f"\n  Delivery : {DELIVERY_MD}")
     print(f"  Target   : {PROJECT_ROOT}\n")
 
-    # Prüfen ob anchor_delivery.md existiert
+    # Check that anchor_delivery.md exists
     if not DELIVERY_MD.is_file():
-        print(f"✗  anchor_delivery.md nicht gefunden: {DELIVERY_MD}")
+        print(f"✗  anchor_delivery.md not found: {DELIVERY_MD}")
         sys.exit(1)
 
-    # Prüfen ob Projektroot existiert
+    # Check that the project root exists
     if not PROJECT_ROOT.is_dir():
-        print(f"✗  Projektroot nicht gefunden: {PROJECT_ROOT}")
+        print(f"✗  Project root not found: {PROJECT_ROOT}")
         sys.exit(1)
 
-    # MD parsen
+    # Parse the MD
     result = parse_delivery(DELIVERY_MD)
     if isinstance(result, str):
         print(result)
@@ -356,7 +376,7 @@ def main() -> None:
     total   = len(anchors)
 
     if total == 0:
-        print("✗  Keine Anchors in anchor_delivery.md gefunden.")
+        print("✗  No anchors found in anchor_delivery.md.")
         sys.exit(1)
 
     # Pass 1
@@ -366,14 +386,24 @@ def main() -> None:
         print(f"\nPass 1 FAILED — {len(errors)} error(s). No files written.\n")
         sys.exit(1)
 
-    print(f"\nPass 1 complete — all {total} anchors located. Starting Pass 2 ...\n")
+    skipped = sum(1 for a in anchors if a.get("status") == "ALREADY_APPLIED")
+    to_apply = total - skipped
+
+    if skipped:
+        print(f"\nPass 1 complete — {to_apply}/{total} anchors to apply, "
+              f"{skipped} already applied (skip). Starting Pass 2 ...\n")
+    else:
+        print(f"\nPass 1 complete — all {total} anchors located. Starting Pass 2 ...\n")
     print("-" * 65)
 
     # Pass 2
     pass2(anchors, total)
 
     print(f"\n{'=' * 65}")
-    print(f"  Done — {total}/{total} anchors applied.")
+    if skipped:
+        print(f"  Done — {to_apply}/{total} anchors applied, {skipped} skipped (already applied).")
+    else:
+        print(f"  Done — {total}/{total} anchors applied.")
     print(f"{'=' * 65}\n")
 
 

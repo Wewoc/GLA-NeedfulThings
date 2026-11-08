@@ -41,10 +41,12 @@ CHUNK_OVERLAP = 400
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
 
-CONTEXT = """You are analyzing chats with Gemini (Google AI) from the context of the project
-"Garmin Local Archive" — a local Python tool for archiving Garmin Connect health data.
-Built by Timo (non-programmer) with Claude as the primary coding partner.
+# One or two sentences about your project, inserted into every prompt — adjust.
+PROJECT_DESCRIPTION = """"My Project" — a short description of what it is and who builds it.
 Gemini was used for reviews, concept evaluations, and peer feedback."""
+
+CONTEXT = ("You are analyzing chats with Gemini (Google AI) from the context of the project\n"
+           + PROJECT_DESCRIPTION)
 
 CHUNK_PROMPT = """{context}
 
@@ -243,7 +245,7 @@ def ensure_header():
     if not OUTPUT_FILE.exists():
         OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
         header = (
-            f"# Garmin Local Archive — Gemini Chat Summaries\n\n"
+            f"# Gemini Chat Summaries\n\n"
             f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}*  \n"
             f"*Chunk model: {CHUNK_MODEL} / Merge model: {MERGE_MODEL} / Direct model: {DIRECT_MODEL}*  \n"
             f"*Chunk size: {CHUNK_SIZE} chars*\n\n"

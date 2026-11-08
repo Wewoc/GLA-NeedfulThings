@@ -28,7 +28,7 @@ Same path convention as `apply_anchors.py` — place this script in a folder
 one level above the target project:
 
 ```
-PROJECT_ROOT = SCRIPT_DIR / "../garmin_collector-1_work"
+PROJECT_ROOT = SCRIPT_DIR / "../my_project"   # adjust to your project
 SRC_DIR      = PROJECT_ROOT / "src"
 ```
 
@@ -42,6 +42,10 @@ python generate_metrics.py
 ```
 
 Exit code `0` on success, `1` on any abort (nothing written).
+
+## Optional: exit-code gate
+
+Set `CHECK_EXIT_CODE = True` near the top of `generate_metrics.py` to additionally abort when `run_tests.ps1` ends with a non-zero exit code, even though the summary block shows no failed suite (for example a pytest error that is reported as "0 failed"). The default is off: it only makes sense if your `run_tests.ps1` exits non-zero whenever a suite failed or crashed — otherwise a harmless non-zero exit would abort every run.
 
 ## Known limitation
 

@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo =================================================================
-echo   run_anchors.bat -- needfull things
+echo   run_anchors.bat -- Needful Things
 echo =================================================================
 echo.
 

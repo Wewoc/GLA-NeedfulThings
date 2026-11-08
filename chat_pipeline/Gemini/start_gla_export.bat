@@ -1,6 +1,6 @@
 @echo off
 echo ============================================================
-echo Gemini GLA-Exporter — Setup
+echo Gemini Exporter — Setup
 echo ============================================================
 echo.
 
@@ -18,7 +18,7 @@ echo Waiting 5 seconds for Chrome to load...
 timeout /t 5 /nobreak >nul
 
 :: Start the exporter script
-echo [3/3] Starting GLA-Exporter...
+echo [3/3] Starting exporter...
 echo.
 cd /d %~dp0
 python gemini_exporter_gla.py

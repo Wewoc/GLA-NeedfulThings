@@ -1,6 +1,6 @@
 """
 scope_snapshot_config_v[VERSION]_[NN].py
-Garmin Local Archive — v[VERSION] · Session Start · [DATE]
+Needful Things — v[VERSION] · Session Start · [DATE]
 Symbol scope for: [SHORT DESCRIPTION OF THE BUILD TASK]
 
 Naming scheme:  scope_snapshot_config_v[version without dots]_[running number, two digits].py

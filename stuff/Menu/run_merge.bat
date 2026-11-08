@@ -5,7 +5,7 @@ if "%MENU_DIR:~-1%"=="\" set "MENU_DIR=%MENU_DIR:~0,-1%"
 set "TARGET=%~1"
 
 echo.
-echo Merge folder to MD -- needfull things
+echo Merge folder to MD -- Needful Things
 echo Folder: %TARGET%
 echo.
 

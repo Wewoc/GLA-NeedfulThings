@@ -1,84 +1,85 @@
-# gemini_pipeline
+# Gemini Chat Pipeline
 
-Extraktion, Sortierung und Zusammenfassung von Gemini-Chatverläufen.
-Gebaut im Kontext des Projekts **Garmin Local Archive** — funktioniert aber
-für jeden Gemini-Nutzer der seine Chats lokal archivieren will.
-
----
-
-## Pipeline-Übersicht
-
-```
-Gemini (Browser)
-        │
-        ▼
-[Chrome Extension]         — amazingpaddy/ai-chat-exporter (unpacked, lokal)
-        │
-        ▼
-[start_gla_export.bat]     — Chrome mit Debug-Port starten + Script starten
-        │
-        ▼
-[gemini_exporter_gla.py]   — Playwright-Automation: Chats exportieren
-        │
-        ▼
-gemini_gla_export/          — Rohe MD-Dateien (ungefiltert)
-        │
-        ▼
-[sort_gemini_chats.py]      — Chronologische Sortierung + Dedup
-        │
-        ▼
-gemini_sorted/              — Nummerierte MD-Dateien (gemini_001_*.md …)
-        │
-        ▼
-[summarize_gemini_chats.py] — Ollama Map-Reduce Summarizer
-        │
-        ▼
-chat_summaries_gemini.md    — Navigierbare Zusammenfassung aller Chats
-```
+Extraction, sorting, and summarizing of Gemini chat histories.
+Built in the context of the **Garmin Local Archive** project — but it works
+for anyone who uses Gemini and wants to archive their chats locally.
 
 ---
 
-## Voraussetzungen
+## Pipeline overview
+
+```
+Gemini (browser)
+        │
+        ▼
+[Chrome extension]         — amazingpaddy/ai-chat-exporter (unpacked, local)
+        │
+        ▼
+[start_gla_export.bat]     — start Chrome with a debug port + start the script
+        │
+        ▼
+[gemini_exporter_gla.py]   — Playwright automation: export chats
+        │
+        ▼
+gemini_gla_export/          — raw MD files (unfiltered)
+        │
+        ▼
+[sort_gemini_chats.py]      — chronological sorting + dedup
+        │
+        ▼
+gemini_sorted/              — numbered MD files (gemini_001_*.md …)
+        │
+        ▼
+[summarize_gemini_chats.py] — Ollama map-reduce summarizer
+        │
+        ▼
+chat_summaries_gemini.md    — navigable summary of all chats
+```
+
+---
+
+## Prerequisites
 
 ### Software
 
-| Tool | Version | Zweck |
-|------|---------|-------|
-| Python | 3.11+ | Alle Scripts |
-| Chrome | aktuell | Export via Playwright |
-| Ollama | aktuell | Lokale LLM-Inferenz |
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Python | 3.11+ | All scripts |
+| Chrome | current | Export via Playwright |
+| Ollama | current | Local LLM inference |
 
-### Chrome Extension — amazingpaddy/ai-chat-exporter
+### Chrome extension — amazingpaddy/ai-chat-exporter
 
-Die Extension wird als **unpacked** geladen — kein Chrome Web Store,
-volle Kontrolle über den installierten Code.
+The extension is loaded **unpacked** — no Chrome Web Store, full control
+over the installed code.
 
 **Installation:**
 ```
-1. https://github.com/amazingpaddy/ai-chat-exporter klonen oder als ZIP herunterladen
-   → Entpacken nach z.B. C:\Tools\ai-chat-exporter\
+1. Clone https://github.com/amazingpaddy/ai-chat-exporter or download it as a ZIP
+   → unpack to e.g. C:\Tools\ai-chat-exporter\
 
-2. Chrome öffnen → chrome://extensions/
-3. Oben rechts: "Entwicklermodus" einschalten
-4. "Entpackte Erweiterung laden" klicken
-5. Ordner C:\Tools\ai-chat-exporter\ auswählen
-6. Extension erscheint in der Liste — fertig
+2. Open Chrome → chrome://extensions/
+3. Top right: switch on "Developer mode"
+4. Click "Load unpacked"
+5. Select the folder C:\Tools\ai-chat-exporter\
+6. The extension appears in the list — done
 ```
 
-> ⚠️ Die Extension bleibt nur für das Chrome-Profil unter `C:\ChromeDebug`
-> aktiv (Debug-Instanz). Das normale Chrome-Profil ist nicht betroffen.
+> ⚠️ The extension stays active only for the Chrome profile under
+> `C:\ChromeDebug` (the debug instance). Your normal Chrome profile is not
+> affected.
 
-### Ollama-Modelle
+### Ollama models
 
 ```powershell
-ollama pull qwen2.5:7b        # Chunk-Phase (schnell)
-ollama pull deepseek-r1:14b   # Merge-Phase (Reasoning)
-ollama pull phi4:14b          # Direkte Summaries kurzer Chats
+ollama pull qwen2.5:7b        # chunk phase (fast)
+ollama pull deepseek-r1:14b   # merge phase (reasoning)
+ollama pull phi4:14b          # direct summaries of short chats
 ```
 
-Modelle sind in `summarize_gemini_chats.py` konfigurierbar — andere Modelle funktionieren ebenfalls.
+The models are configurable in `summarize_gemini_chats.py` — other models work as well.
 
-### Python-Abhängigkeiten
+### Python dependencies
 
 ```powershell
 pip install playwright
@@ -87,180 +88,184 @@ playwright install chromium
 
 ---
 
-## Verzeichnisstruktur
+## Directory structure
 
 ```
-gemini_pipeline/
-├── start_gla_export.bat          ← Schritt 0: Chrome starten + Exporter starten
-├── gemini_exporter_gla.py        ← Schritt 1: Playwright-Export-Automation
-├── sort_gemini_chats.py          ← Schritt 2: Chronologische Sortierung
-├── summarize_gemini_chats.py     ← Schritt 3: Ollama Summarizer
+chat_pipeline/Gemini/
+├── start_gla_export.bat          ← step 0: start Chrome + start the exporter
+├── gemini_exporter_gla.py        ← step 1: Playwright export automation
+├── sort_gemini_chats.py          ← step 2: chronological sorting
+├── summarize_gemini_chats.py     ← step 3: Ollama summarizer
 │
-├── gemini_gla_export/            ← [nicht im Repo] Rohexporte
-├── gemini_sorted/                ← [nicht im Repo] Sortierte Chats
-└── chat_summaries_gemini.md      ← [nicht im Repo] Finaler Output
+├── gemini_gla_export/            ← [not in the repo] raw exports
+├── gemini_sorted/                ← [not in the repo] sorted chats
+└── chat_summaries_gemini.md      ← [not in the repo] final output
 ```
 
 ---
 
-## Schritt 0 — Chrome starten (`start_gla_export.bat`)
+## Step 0 — Start Chrome (`start_gla_export.bat`)
 
-Doppelklick auf `start_gla_export.bat`. Das Script:
+Double-click `start_gla_export.bat`. The script:
 
-1. Beendet laufende Chrome-Instanzen
-2. Startet Chrome mit Debug-Port 9222 und separatem Profil (`C:\ChromeDebug`)
-3. Öffnet `gemini.google.com/app` direkt
-4. Startet `gemini_exporter_gla.py` automatisch
+1. Closes running Chrome instances
+2. Starts Chrome with debug port 9222 and a separate profile (`C:\ChromeDebug`)
+3. Opens `gemini.google.com/app` directly
+4. Starts `gemini_exporter_gla.py` automatically
 
-**Beim ersten Start:**
-- Chrome öffnet sich mit leerem `C:\ChromeDebug`-Profil
-- Bei Google anmelden
-- Extension manuell laden (siehe oben, einmalig)
+**On the first start:**
+- Chrome opens with an empty `C:\ChromeDebug` profile
+- Sign in to Google
+- Load the extension manually (see above, one time only)
 
-**Chrome-Pfad anpassen** falls Chrome nicht unter
-`C:\Program Files\Google\Chrome\Application\chrome.exe` liegt:
-→ Zeile 10 in `start_gla_export.bat` editieren.
+**Adjust the Chrome path** if Chrome is not installed under
+`C:\Program Files\Google\Chrome\Application\chrome.exe`:
+→ edit the `start "" "…\chrome.exe"` line in `start_gla_export.bat`.
 
 ---
 
-## Schritt 1 — Export-Automation (`gemini_exporter_gla.py`)
+## Step 1 — Export automation (`gemini_exporter_gla.py`)
 
-Das Script verbindet sich via Playwright CDP zum laufenden Chrome,
-scrollt die Sidebar durch, sammelt alle Chat-URLs und exportiert
-gefilterte Chats als MD-Dateien.
+The script connects to the running Chrome via Playwright CDP, scrolls
+through the sidebar, collects all chat URLs, and exports the filtered chats
+as MD files.
 
-### Ablauf
+### Flow
 ```
-1. CDP-Verbindung zu Chrome (Port 9222)
-2. Sidebar scrollen → alle Chat-URLs sammeln
-3. Jeden Chat öffnen → Titel gegen Keyword-Filter prüfen
-4. Bei Treffer: Extension-Button "Export Chat" klicken (2× — Popup + Bestätigung)
-5. MD-Datei landet im Download-Ordner → wird nach gemini_gla_export/ verschoben
+1. CDP connection to Chrome (port 9222)
+2. Scroll the sidebar → collect all chat URLs
+3. Open each chat → check the title against the keyword filter
+4. On a match: click the extension button "Export Chat" (twice — popup + confirmation)
+5. The MD file lands in the download folder → is moved to gemini_gla_export/
 ```
 
-### Keyword-Filter anpassen
+### Adjusting the keyword filter
 
-Der Filter in `gemini_exporter_gla.py` ist auf GLA-relevante Begriffe
-ausgelegt. Für andere Projekte einfach `GLA_KEYWORDS` (ab Zeile 55) anpassen.
+The filter in `gemini_exporter_gla.py` exports only chats whose title contains one of the terms in
+`PROJECT_KEYWORDS`. The shipped list holds two placeholders — replace them with terms from your own
+chat titles at the top of the script.
 
-Ohne Filter alle Chats exportieren:
+Export all chats without a filter:
 ```powershell
 python gemini_exporter_gla.py --no-filter
 ```
 
-### Parameter
+### Parameters
 
 ```powershell
-python gemini_exporter_gla.py --output-dir ./meine_chats   # Anderer Output-Ordner
-python gemini_exporter_gla.py --no-filter                  # Alle Chats exportieren
-python gemini_exporter_gla.py --cdp-port 9223              # Anderer Debug-Port
-python gemini_exporter_gla.py --no-skip                    # Bereits vorhandene neu exportieren
+python gemini_exporter_gla.py --output-dir ./my_chats      # different output folder
+python gemini_exporter_gla.py --no-filter                  # export all chats
+python gemini_exporter_gla.py --cdp-port 9223              # different debug port
+python gemini_exporter_gla.py --no-skip                    # re-export chats that already exist
 ```
 
-**Output:** MD-Dateien mit Format `Chatname_YYYYMMDD_HHMMSS.md`
+**Output:** MD files named `Chatname_YYYYMMDD_HHMMSS.md`
 
 ---
 
-## Schritt 2 — Sortierung (`sort_gemini_chats.py`)
+## Step 2 — Sorting (`sort_gemini_chats.py`)
 
-Sortiert die exportierten MDs chronologisch anhand des Export-Timestamps
-im Dateinamen. Gemini exportiert Chats von oben nach unten
-(neueste zuerst) — Umkehrung ergibt chronologische Reihenfolge.
+Sorts the exported MDs chronologically by the export timestamp in the file
+name. Gemini exports chats from top to bottom (newest first) — reversing
+that gives chronological order.
 
-### Ausführen
+### Running it
 
 ```powershell
-# Dry-Run — nur Vorschau, nichts kopieren
+# Dry run — preview only, nothing is copied
 python sort_gemini_chats.py --dry-run
 
-# Produktiv
+# For real
 python sort_gemini_chats.py
 
-# Andere Pfade
+# Different paths
 python sort_gemini_chats.py --source ./gemini_gla_export --dest ./gemini_sorted
 ```
 
-### Duplikat-Behandlung
+### Duplicate handling
 
-Die Extension erzeugt bei manchen Chats zwei Dateien mit leicht
-unterschiedlichem Timestamp-Format. Das Script erkennt Duplikate
-über normalisierten Titel-Vergleich und behält jeweils den älteren.
+For some chats the extension produces two files with a slightly different
+timestamp format. The script detects duplicates through a normalized title
+comparison and keeps the older one in each case.
 
-**Output:** `gemini_001_Titel.md` … `gemini_NNN_Titel.md`
+**Output:** `gemini_001_Title.md` … `gemini_NNN_Title.md`
 
 ---
 
-## Schritt 3 — Summarizer (`summarize_gemini_chats.py`)
+## Step 3 — Summarizer (`summarize_gemini_chats.py`)
 
-Fasst jeden Chat via Ollama zusammen. Kurze Chats direkt,
-lange Chats per Map-Reduce (Chunk → Teil-Summary → Merge).
+Summarizes every chat via Ollama. Short chats directly, long chats via
+map-reduce (chunk → partial summary → merge).
 
-### Voraussetzung
+### Prerequisite
 
 ```powershell
-ollama serve   # in separatem Fenster laufen lassen
+ollama serve   # keep it running in a separate window
 ```
 
-### Ausführen
+### Running it
 
 ```powershell
 python summarize_gemini_chats.py
 ```
 
-Resume-safe: bei Abbruch einfach neu starten —
-bereits verarbeitete Chats werden übersprungen.
+Resume-safe: after an interruption just start it again —
+chats that were already processed are skipped.
 
-### Konfiguration (in `summarize_gemini_chats.py`)
+### Configuration (in `summarize_gemini_chats.py`)
 
 ```python
-CHUNK_MODEL  = "qwen2.5:7b"      # Chunk-Phase — schnell
-MERGE_MODEL  = "deepseek-r1:14b" # Merge — stärkeres Modell
-DIRECT_MODEL = "phi4:14b"        # Kurze Chats direkt
+CHUNK_MODEL  = "qwen2.5:7b"      # chunk phase — fast
+MERGE_MODEL  = "deepseek-r1:14b" # merge — stronger model
+DIRECT_MODEL = "phi4:14b"        # short chats, directly
 
-CHUNK_SIZE    = 8000   # Zeichen pro Chunk
-CHUNK_OVERLAP = 400    # Überlappung zwischen Chunks
+CHUNK_SIZE    = 8000   # characters per chunk
+CHUNK_OVERLAP = 400    # overlap between chunks
 ```
 
-### Verarbeitungslogik
+### Processing logic
 
 ```
-Chat ≤ 8.000 Zeichen   → DIRECT_MODEL, 1 Aufruf
+Chat ≤ 8,000 characters  → DIRECT_MODEL, 1 call
 
-Chat > 8.000 Zeichen   → Map-Reduce:
-  Chunk 1 → CHUNK_MODEL → Teil-Summary 1
-  Chunk 2 → CHUNK_MODEL → Teil-Summary 2
+Chat > 8,000 characters  → map-reduce:
+  Chunk 1 → CHUNK_MODEL → partial summary 1
+  Chunk 2 → CHUNK_MODEL → partial summary 2
   ...
-  Alle Teil-Summaries → MERGE_MODEL → Gesamt-Summary
+  All partial summaries → MERGE_MODEL → overall summary
 ```
 
-### Zeitschätzung
+### Time estimate
 
-| Chat-Größe | Chunks | Dauer (ca.) |
-|-----------|--------|-------------|
-| < 8 KB | — (direkt) | 2-3 min |
-| ~50 KB | ~6 Chunks | 15-20 min |
-| ~200 KB | ~25 Chunks | 60-90 min |
+| Chat size | Chunks | Duration (approx.) |
+|-----------|--------|--------------------|
+| < 8 KB | — (direct) | 2-3 min |
+| ~50 KB | ~6 chunks | 15-20 min |
+| ~200 KB | ~25 chunks | 60-90 min |
 
-**VRAM-Hinweis:** `qwen2.5:7b` + `deepseek-r1:14b` passen nicht gleichzeitig
-in 16 GB VRAM. Ollama swapped automatisch — das ist OK, da Chunk- und
-Merge-Phase sowieso sequenziell laufen.
-
----
-
-## Hinweise
-
-**Keyword-Filter:** `GLA_KEYWORDS` in `gemini_exporter_gla.py` ist projektspezifisch.
-Für andere Kontexte anpassen oder mit `--no-filter` deaktivieren.
-
-**Modellwechsel:** Der erste Wechsel zwischen CHUNK_MODEL und MERGE_MODEL
-kostet ~30-60 Sekunden Ladezeit — das ist normal.
-
-**Sehr lange Chats:** Einzelne Chats mit 200+ KB sind möglich (mehrere Monate
-Entwicklung in einem Verlauf). Map-Reduce verarbeitet diese zuverlässig,
-braucht aber entsprechend Zeit.
+**VRAM note:** `qwen2.5:7b` + `deepseek-r1:14b` do not fit into 16 GB of VRAM
+at the same time. Ollama swaps automatically — that is fine, since the chunk
+and merge phases run sequentially anyway.
 
 ---
 
-*Pipeline erstellt: Mai 2026*
-*Kontext: Garmin Local Archive — Story-Dokumentation*
+## Notes
+
+**Keyword filter:** `PROJECT_KEYWORDS` in `gemini_exporter_gla.py` holds placeholders.
+Set your own terms or switch the filter off with `--no-filter`.
+
+**Project description:** `PROJECT_DESCRIPTION` at the top of `summarize_gemini_chats.py`
+is inserted into every summary prompt. Describe your project there.
+
+**Switching models:** The first switch between CHUNK_MODEL and MERGE_MODEL
+costs ~30-60 seconds of load time — that is normal.
+
+**Very long chats:** Single chats of 200+ KB are possible (several months
+of development in one conversation). Map-reduce handles these reliably,
+but needs time accordingly.
+
+---
+
+*Pipeline created: May 2026*
+*Context: Garmin Local Archive — story documentation*
 *Extension: [amazingpaddy/ai-chat-exporter](https://github.com/amazingpaddy/ai-chat-exporter)*

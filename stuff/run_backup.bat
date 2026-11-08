@@ -5,7 +5,7 @@ echo   backup_to_onedrive running...
 echo ====================================================
 echo.
 
-:: Startet das Python-Skript
+:: Starts the Python script
 python backup_to_onedrive.py
 
 echo.

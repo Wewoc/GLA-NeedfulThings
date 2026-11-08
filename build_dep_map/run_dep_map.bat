@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title build_dep_map -- needfull things
+title build_dep_map -- Needful Things
 
 echo.
 echo ================================================================

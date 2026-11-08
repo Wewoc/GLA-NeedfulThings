@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo =================================================================
-echo   run_metrics.bat — Garmin Local Archive
+echo   run_metrics.bat — Needful Things
 echo =================================================================
 echo.
 

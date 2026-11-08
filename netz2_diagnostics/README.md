@@ -40,6 +40,11 @@ changed.
 - Python 3.10+
 - A local checkout of [Garmin Local Archive](https://github.com/Wewoc/Garmin_Local_Archive) (the scripts import its
   core modules directly — `sys.path.insert`, no packaging)
+- **GLA version:** this folder was published with GLA v1.6.5.8 (2026-08-03); the six
+  modules in `CORE_MODULES` (`netz2_delta.py`) are the Net-2 core of that version.
+  Later GLA versions added modules to the Net-2 layer (for example the bulk importer
+  and the source backup) — extend `CORE_MODULES` for them. The scenario scripts were
+  not re-run against newer GLA versions.
 - A local Garmin data archive (`garmin_data/` parent folder) with at least one
   real `raw/*.json` file — used read-only as a fixture template
 

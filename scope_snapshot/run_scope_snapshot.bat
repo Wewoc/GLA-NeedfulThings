@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo =================================================================
-echo   run_scope_snapshot.bat — Garmin Local Archive
+echo   run_scope_snapshot.bat — Needful Things
 echo =================================================================
 echo.
 

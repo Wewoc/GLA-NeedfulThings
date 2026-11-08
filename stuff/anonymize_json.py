@@ -2,11 +2,11 @@
 """
 anonymize_json.py
 
-Liest alle JSON-Dateien aus dem Unterordner ./json und ersetzt alle Werte
-durch Platzhalter. Struktur und Feldnamen bleiben erhalten.
-Ausgabe: ./json/export/
+Reads all JSON files from the ./json subfolder and replaces all values
+with placeholders. Structure and field names are preserved.
+Output: ./json/export/
 
-Verwendung:
+Usage:
     python anonymize_json.py
 """
 
@@ -16,13 +16,13 @@ from pathlib import Path
 
 
 def anonymize(obj):
-    """Ersetzt alle Werte rekursiv durch Platzhalter."""
+    """Replaces all values recursively with placeholders."""
     if isinstance(obj, dict):
         return {k: anonymize(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         if not obj:
             return []
-        # Nur erstes Element anonymisieren — Struktur erkennbar, Datei klein
+        # Anonymize only the first element — structure stays recognizable, file stays small
         return [anonymize(obj[0])]
     elif isinstance(obj, bool):
         return False
@@ -40,14 +40,14 @@ def main():
     output_dir = input_dir / "export"
 
     if not input_dir.exists() or not input_dir.is_dir():
-        print(f"Fehler: Ordner nicht gefunden: {input_dir}")
+        print(f"Error: folder not found: {input_dir}")
         sys.exit(1)
 
     output_dir.mkdir(exist_ok=True)
 
     json_files = list(input_dir.glob("*.json"))
     if not json_files:
-        print("Keine JSON-Dateien gefunden.")
+        print("No JSON files found.")
         sys.exit(0)
 
     for input_path in sorted(json_files):
@@ -66,7 +66,7 @@ def main():
 
         print(f"  ✓ {input_path.name} ({input_path.stat().st_size / 1024:.1f} KB → {output_path.stat().st_size / 1024:.1f} KB)")
 
-    print(f"\nFertig. {len(json_files)} Dateien → {output_dir}")
+    print(f"\nDone. {len(json_files)} files → {output_dir}")
 
 
 if __name__ == "__main__":

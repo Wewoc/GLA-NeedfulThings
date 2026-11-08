@@ -1,4 +1,4 @@
-# Garmin Local Archive — Chat Analysis Pipeline
+# Claude Chat Analysis Pipeline
 
 A local pipeline for sorting, summarizing, and exporting Claude chat histories.
 Useful for reviewing architectural decisions, generating project narratives, or building context for new sessions.
@@ -64,11 +64,11 @@ Or manually:
 
 ## Output
 
-All output lands in `sorted/Garmin/` (or `sorted/<SEARCH_LABEL>/` if changed):
+All output lands in `sorted/MyProject/` (or `sorted/<SEARCH_LABEL>/` if changed):
 
 ```
-sorted/Garmin/
-  0001_Garmin-....json       ← sorted individual chats
+sorted/MyProject/
+  0001_MyProject-....json       ← sorted individual chats
   chat_summaries.md          ← raw summaries (Step 2 output)
   chat_summaries_sorted.md   ← chronologically sorted (Step 3 output)
   merged_chats.json          ← optional merge (Step 4)
@@ -84,7 +84,7 @@ All parameters in `config.py` — no other files need to be changed:
 
 | Parameter | Default | Description |
 |---|---|---|
-| `SEARCH_LABEL` | `"Garmin"` | Label prefix to filter chats |
+| `SEARCH_LABEL` | `"MyProject"` | Label prefix to filter chats |
 | `INPUT_DIR` | `.` | Folder with exported Claude JSON files |
 | `MODEL` | `"qwen2.5-coder:14b"` | Ollama model for summarization |
 | `MAX_MESSAGES`   | `60`  | Max messages per chat sent to model |

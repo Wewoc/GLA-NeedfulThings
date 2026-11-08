@@ -23,7 +23,7 @@ def main():
         print(f"✗ No JSON files found in: {INPUT_DIR.resolve()}")
         return
 
-    print(f"Garmin Local Archive — Chat Sorter")
+    print(f"Needful Things — Chat Sorter")
     print(f"{'=' * 40}")
     print(f"  Search label : '{SEARCH_LABEL}'")
     print(f"  Input folder : {INPUT_DIR.resolve()}")

@@ -15,8 +15,8 @@ echo   [1/3] Configuration
 echo   ------------------------------------------
 echo.
 
-set /p "SEARCH_LABEL=  Label prefix to filter (default: Garmin): "
-if "!SEARCH_LABEL!"=="" set SEARCH_LABEL=Garmin
+set /p "SEARCH_LABEL=  Label prefix to filter (default: MyProject): "
+if "!SEARCH_LABEL!"=="" set SEARCH_LABEL=MyProject
 
 set /p "INPUT_DIR=  Folder with exported JSON (default: .): "
 if "!INPUT_DIR!"=="" set INPUT_DIR=.

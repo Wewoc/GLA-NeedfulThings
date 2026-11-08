@@ -1,6 +1,6 @@
 # menu — Context Menu Integration
 
-Adds right-click entries for the needfull things `stuff/` scripts to
+Adds right-click entries for the Needful Things `stuff/` scripts to
 Windows Explorer and OneCommander. The original scripts are not modified.
 
 ---

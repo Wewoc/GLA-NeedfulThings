@@ -2,10 +2,10 @@
 gemini_exporter_gla.py
 ======================
 Based on Liyue2341/gemini-exporter.
-Adapted for selective export: only GLA-relevant chats.
+Adapted for selective export: only project-relevant chats.
 
 Changes from original:
-  - Keyword filter: only chats with GLA-relevant titles are exported
+  - Keyword filter: only chats whose titles match PROJECT_KEYWORDS are exported
   - Title is read from the page (document.title)
   - Filename: sanitized title + timestamp instead of conv_id.json
   - Output: .md (amazingpaddy extension remains unchanged)
@@ -47,95 +47,21 @@ PLUGIN_DOWNLOAD_POLL_SEC = 25
 
 SLEEP_MIN, SLEEP_MAX = 3, 6
 
-# ============== GLA Keyword Filter ==============
+# ============== Keyword filter ==============
 # A chat is exported if its title contains at least one of these keywords.
-# Case-insensitive matching.
+# Case-insensitive matching. Replace the placeholders with terms from your own
+# chat titles, or switch the filter off with --no-filter.
 
-GLA_KEYWORDS = [
-    # Directly GLA
-    "garmin",
-    "GLA",
-    "garmin local archive",
-    "refactoring plan",
-    "gui/controller",
-    "fit-pipeline",
-    "pyqt6 migration",
-    "readme-analyse",
-    "code-analyse",
-    "architektur-analyse",
-    "technisches review",
-    "selfhosted garmin",
-    "code review für garmin",
-    "branding analyse",
-    "substack episode",
-    "kritisches testprotokoll",
-    "chat-analyser",
-    "gemini export analyse",
-    "gemini chat-verläufe",
-    "schema versioning",
-    "token-persistenz",
-    "projekt gla-tools",
-    "garminconnect",
-    # Context / Story
-    "softwarearchitektur als ingenieur",
-    "ki-gestützte archivierung",
-    "ai-assisted coding",
-    "kehrseite des vibecodings",
-    "vibe coding",
-    "ki-nutzung in softwareentwicklung",
-    "digitalen souveränität",
-    "ki-zusammenarbeit",
-    "refactoring.md",
-    "libhunt",
-    "github stars",
-    "github pull shark",
-    "pipeline-umbau",
-    "llm-identifikation",
-    "small language models",
-    "claude code lokal",
-    "open webui",
-    "sichere lokale ki",
-    "terminologie-engine",
-    "llms für python",
-    "deerflow",
-    "lokales repo mit github",
-    "bild im gla-stil",
-    # Category C — semantically relevant
-    "dsgvo-datenportabilität",
-    "datenportabilität",
-    "fitness-tracker",
-    "ollama",
-    "proton drive",
-    "proton mail",
-    "proton:",
-    "cloud vs. lokal",
-    "cloud vs lokal",
-    "nutzungs-limit",
-    "browser-vergleich",
-    "datenschutz",
-    "whisper",
-    "spracherkennung lokal",
-    "manus ai",
-    "gemma",
-    "maschinelle übersetzung",
-    "markdown-dateien zusammen",
-    "enigma verschlüsselung",
-    "git pull",
-    "git clone",
-    "powershell python",
-    "ordnernamen",
-    "markdown als pdf",
-    "needful things",
-    "repository-wachstum",
-    "github insights",
-    "open webu",
+PROJECT_KEYWORDS = [
+    "my project",
+    "my-project",
 ]
 # ================================================
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Export GLA-relevant Gemini chats as Markdown files.",
+        description="Export project-relevant Gemini chats as Markdown files.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--cdp-port", type=int, default=9222)
@@ -170,10 +96,10 @@ def _sanitize_filename(title: str) -> str:
     return title[:80] if title else "unknown"
 
 
-def _is_gla_relevant(title: str) -> bool:
-    """Check whether a chat title matches the GLA keyword filter."""
+def _is_relevant(title: str) -> bool:
+    """Check whether a chat title matches the keyword filter."""
     title_lower = title.lower()
-    return any(kw.lower() in title_lower for kw in GLA_KEYWORDS)
+    return any(kw.lower() in title_lower for kw in PROJECT_KEYWORDS)
 
 
 async def _get_page_title(page) -> str:
@@ -384,8 +310,8 @@ async def _export_one_via_plugin(
     out_path = download_dir / out_filename
 
     # Apply filter
-    if use_filter and not _is_gla_relevant(title):
-        print(f"      → Skipped (no GLA keyword): {title[:60]}")
+    if use_filter and not _is_relevant(title):
+        print(f"      → Skipped (no matching keyword): {title[:60]}")
         return False
 
     print(f"      → Exporting: {title[:60]}")
@@ -490,8 +416,8 @@ async def main(args):
     use_filter = not args.no_filter
 
     print("=" * 60)
-    print("Gemini GLA-Exporter")
-    print(f"  Filter: {'ON — GLA chats only' if use_filter else 'OFF — all chats'}")
+    print("Gemini Exporter")
+    print(f"  Filter: {'ON — matching chats only' if use_filter else 'OFF — all chats'}")
     print(f"  Output: {output_dir}")
     print("=" * 60)
 

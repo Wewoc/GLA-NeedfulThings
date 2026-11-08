@@ -54,13 +54,13 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  KERN-LOGIK
+#  CORE LOGIC
 # ══════════════════════════════════════════════════════════════════════════════
 
 def collect_files(root: Path) -> dict[Path, int]:
     """
-    Gibt ein Dict zurück: {relativer_pfad → dateigröße_in_bytes}
-    für alle Dateien unterhalb von root (rekursiv).
+    Returns a dict: {relative_path → file_size_in_bytes}
+    for all files below root (recursive).
     """
     result = {}
     for entry in root.rglob("*"):
@@ -71,60 +71,60 @@ def collect_files(root: Path) -> dict[Path, int]:
             try:
                 result[rel] = entry.stat().st_size
             except OSError as e:
-                log.warning(f"  Konnte Datei nicht lesen: {entry}  ({e})")
+                log.warning(f"  Could not read file: {entry}  ({e})")
     return result
 
 
 def remove_empty_dirs(root: Path, dry_run: bool = False) -> int:
     """
-    Entfernt leere Unterordner unterhalb von root (bottom-up).
-    Gibt die Anzahl entfernter Ordner zurück.
+    Removes empty subfolders below root (bottom-up).
+    Returns the number of removed folders.
     """
     removed = 0
-    # rglob liefert top-down; reversed() macht daraus bottom-up
+    # rglob yields top-down; reversed() makes it bottom-up
     for folder in sorted(root.rglob("*"), reverse=True):
         if folder.is_dir() and folder != root:
             if folder.name in EXCLUDE_DIRS:
                 continue
             try:
-                if not any(folder.iterdir()):   # wirklich leer?
+                if not any(folder.iterdir()):   # really empty?
                     if dry_run:
-                        log.info(f"  [DRY-RUN] würde leeren Ordner löschen: {folder.relative_to(root)}")
+                        log.info(f"  [DRY-RUN] would delete empty folder: {folder.relative_to(root)}")
                     else:
                         folder.rmdir()
-                        log.info(f"  ORDNER GELÖSCHT (leer)  {folder.relative_to(root)}")
+                        log.info(f"  FOLDER DELETED (empty)  {folder.relative_to(root)}")
                     removed += 1
             except OSError as e:
-                log.warning(f"  Ordner konnte nicht entfernt werden: {folder}  ({e})")
+                log.warning(f"  Folder could not be removed: {folder}  ({e})")
     return removed
 
 
 def run_backup(local_dir: Path, backup_dir: Path, dry_run: bool = False) -> None:
     start = datetime.now()
     log.info("=" * 70)
-    log.info(f"Sync gestartet {'[DRY-RUN] ' if dry_run else ''}")
-    log.info(f"  Master (lokal) : {local_dir}")
+    log.info(f"Sync started {'[DRY-RUN] ' if dry_run else ''}")
+    log.info(f"  Master (local) : {local_dir}")
     log.info(f"  Backup (OneDrive): {backup_dir}")
     log.info("=" * 70)
 
-    # Validierung
+    # Validation
     if not local_dir.exists():
-        log.error(f"Quellordner existiert nicht: {local_dir}")
+        log.error(f"Source folder does not exist: {local_dir}")
         return
     if not local_dir.is_dir():
-        log.error(f"Quelle ist kein Ordner: {local_dir}")
+        log.error(f"Source is not a folder: {local_dir}")
         return
 
-    # Dateien einlesen
-    log.info("Lese lokale Dateien ...")
+    # Read the files
+    log.info("Reading local files ...")
     local_files  = collect_files(local_dir)
-    log.info("Lese Backup-Dateien ...")
+    log.info("Reading backup files ...")
     backup_files = collect_files(backup_dir) if backup_dir.exists() else {}
 
-    log.info(f"  Lokal gefunden  : {len(local_files):>6} Dateien")
-    log.info(f"  Backup gefunden : {len(backup_files):>6} Dateien")
+    log.info(f"  Local found     : {len(local_files):>6} files")
+    log.info(f"  Backup found    : {len(backup_files):>6} files")
 
-    # ── Phase 1: Was muss kopiert / überschrieben werden? ─────────────────────
+    # ── Phase 1: What has to be copied / overwritten? ─────────────────────
     to_copy   = []
     skipped   = 0
     size_diff = 0
@@ -135,14 +135,14 @@ def run_backup(local_dir: Path, backup_dir: Path, dry_run: bool = False) -> None
             if local_size == backup_files[rel]:
                 skipped += 1
             else:
-                log.info(f"  ABWEICHEND  {rel}  "
-                         f"(lokal={local_size}B  backup={backup_files[rel]}B)")
+                log.info(f"  DIFFERENT  {rel}  "
+                         f"(local={local_size}B  backup={backup_files[rel]}B)")
                 to_copy.append((local_dir / rel, target))
                 size_diff += 1
         else:
             to_copy.append((local_dir / rel, target))
 
-    # ── Phase 2: Was ist nur auf OneDrive und muss gelöscht werden? ───────────
+    # ── Phase 2: What exists only on OneDrive and has to be deleted? ───────────
     to_delete = [
         backup_dir / rel
         for rel in backup_files
@@ -150,49 +150,49 @@ def run_backup(local_dir: Path, backup_dir: Path, dry_run: bool = False) -> None
     ]
 
     log.info("-" * 70)
-    log.info(f"  Identisch (übersprungen) : {skipped:>6}")
-    log.info(f"  Abweichend (überschreiben): {size_diff:>6}")
-    log.info(f"  Fehlend (neu kopieren)   : {len(to_copy) - size_diff:>6}")
-    log.info(f"  Gesamt zu kopieren       : {len(to_copy):>6}")
-    log.info(f"  Nur auf OneDrive (löschen): {len(to_delete):>5}")
+    log.info(f"  Identical (skipped)     : {skipped:>6}")
+    log.info(f"  Different (overwrite)   : {size_diff:>6}")
+    log.info(f"  Missing (copy new)      : {len(to_copy) - size_diff:>6}")
+    log.info(f"  Total to copy           : {len(to_copy):>6}")
+    log.info(f"  Only on OneDrive (delete): {len(to_delete):>5}")
     log.info("-" * 70)
 
     copied = 0
     errors = 0
 
-    # ── Kopieren ──────────────────────────────────────────────────────────────
+    # ── Copy ──────────────────────────────────────────────────────────────
     for src, dst in to_copy:
         rel_display = src.relative_to(local_dir)
         if dry_run:
-            log.info(f"  [DRY-RUN] würde kopieren: {rel_display}")
+            log.info(f"  [DRY-RUN] would copy: {rel_display}")
             copied += 1
             continue
         try:
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
-            log.info(f"  KOPIERT  {rel_display}")
+            log.info(f"  COPIED  {rel_display}")
             copied += 1
         except Exception as e:
-            log.error(f"  FEHLER (kopieren)  {rel_display}  →  {e}")
+            log.error(f"  ERROR (copy)  {rel_display}  →  {e}")
             errors += 1
 
-    # ── Löschen (OneDrive-only Dateien) ──────────────────────────────────────
+    # ── Delete (OneDrive-only files) ──────────────────────────────────────
     deleted = 0
     for dst in to_delete:
         rel_display = dst.relative_to(backup_dir)
         if dry_run:
-            log.info(f"  [DRY-RUN] würde löschen: {rel_display}")
+            log.info(f"  [DRY-RUN] would delete: {rel_display}")
             deleted += 1
             continue
         try:
             dst.unlink()
-            log.info(f"  GELÖSCHT  {rel_display}")
+            log.info(f"  DELETED  {rel_display}")
             deleted += 1
         except Exception as e:
-            log.error(f"  FEHLER (löschen)  {rel_display}  →  {e}")
+            log.error(f"  ERROR (delete)  {rel_display}  →  {e}")
             errors += 1
 
-    # ── Leere Ordner aufräumen ────────────────────────────────────────────────
+    # ── Clean up empty folders ────────────────────────────────────────────────
     removed_dirs = 0
     if backup_dir.exists():
         removed_dirs = remove_empty_dirs(backup_dir, dry_run=dry_run)
@@ -211,17 +211,17 @@ def _log_summary(
 ) -> None:
     elapsed = datetime.now() - start
     log.info("=" * 70)
-    log.info(f"Sync abgeschlossen {'[DRY-RUN] ' if dry_run else ''}in {elapsed.total_seconds():.1f}s")
-    log.info(f"  Übersprungen      : {skipped}")
-    log.info(f"  Kopiert           : {copied}")
-    log.info(f"  Gelöscht (Dateien): {deleted}")
-    log.info(f"  Gelöscht (Ordner) : {removed_dirs}")
-    log.info(f"  Fehler            : {errors}")
+    log.info(f"Sync finished {'[DRY-RUN] ' if dry_run else ''}in {elapsed.total_seconds():.1f}s")
+    log.info(f"  Skipped           : {skipped}")
+    log.info(f"  Copied            : {copied}")
+    log.info(f"  Deleted (files)   : {deleted}")
+    log.info(f"  Deleted (folders) : {removed_dirs}")
+    log.info(f"  Errors            : {errors}")
     log.info("=" * 70)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  EINSTIEGSPUNKT
+#  ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":

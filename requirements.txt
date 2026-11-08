@@ -1,4 +1,4 @@
-# Requirements for the tools directory (Garmin Local Archive)
+# Requirements for the tools directory (Needful Things)
 
 # --- git_analyse ---
 pandas
@@ -8,3 +8,13 @@ python-dotenv
 # --- chat_pipeline ---
 # Required for Step 6 (Word .docx export)
 python-docx
+
+# --- check_vulture ---
+vulture
+
+# --- check_cve ---
+pip-audit
+
+# --- mutation_runner ---
+# Pinned: the runner reads Cosmic Ray's internal result tables
+cosmic-ray==8.7.0

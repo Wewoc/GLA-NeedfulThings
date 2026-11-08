@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo =================================================================
-echo   run_scan.bat -- needfull things
+echo   run_scan.bat -- Needful Things
 echo =================================================================
 echo.
 

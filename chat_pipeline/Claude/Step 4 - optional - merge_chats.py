@@ -16,7 +16,7 @@ def main():
         print(f"✗ No JSON files found in: {SORTED_DIR.resolve()}")
         return
 
-    print("Garmin Local Archive — Chat Merger")
+    print("Needful Things — Chat Merger")
     print("=" * 40)
     chats = errors = 0
 

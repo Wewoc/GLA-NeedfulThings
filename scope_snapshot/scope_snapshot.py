@@ -1,5 +1,5 @@
 """
-scope_snapshot.py — Garmin Local Archive / GLA-NeedfulThings
+scope_snapshot.py — Needful Things
 Generates a symbol map (signatures, constants, class attributes) for a
 confirmed file scope — preparation before the first build task of a session.
 
@@ -355,7 +355,7 @@ def build_md(config, results: list[dict], project_root: Path) -> str:
     ses_note = getattr(config, "SESSION_NOTE", "")
 
     lines = []
-    lines.append("# SCOPE_SNAPSHOT — Garmin Local Archive")
+    lines.append("# SCOPE_SNAPSHOT — Needful Things")
     lines.append("")
     lines.append(f"Generated : {now}")
     lines.append(f"Config    : {cfg_id}")
@@ -482,7 +482,7 @@ def archive(config_id: str, original_config_name: str) -> None:
 
 def main() -> None:
     print("=" * 65)
-    print("  scope_snapshot.py — Garmin Local Archive")
+    print("  scope_snapshot.py — Needful Things")
     print("=" * 65)
     print()
 
@@ -497,7 +497,7 @@ def main() -> None:
 
     config_id    = getattr(cfg, "CONFIG_ID",    "unknown")
     session_note = getattr(cfg, "SESSION_NOTE", "")
-    proj_rel     = getattr(cfg, "PROJECT_ROOT", "../garmin_collector-1_work")
+    proj_rel     = getattr(cfg, "PROJECT_ROOT", "../my_project")
     scope_files  = getattr(cfg, "SCOPE_FILES",  [])
 
     project_root = (SCRIPT_DIR / proj_rel).resolve()

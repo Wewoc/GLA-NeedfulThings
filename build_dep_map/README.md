@@ -42,7 +42,7 @@ KNOWN_EXTERNAL = [
 ### 2. Directory layout
 
 ```
-needfull_things/
+GLA-NeedfulThings/
 └── build_dep_map/
     ├── build_dep_map.py
     ├── build_dep_map_config.py      ← edit this
@@ -83,6 +83,10 @@ python build_dep_map.py --baseline output/2026-06-20_Run-01/dep_map_records.json
 When a baseline is available (manual or `auto_last`), an additional `dep_map_delta.md` is produced showing newly added and removed dependencies side by side.
 
 On the first run (no `output/` directory yet), the delta step is skipped automatically.
+
+### Accepted GEKIPPT transitions
+
+The classifier only treats `raise` / re-raise as a clean exit from an `except` block. A handler that passes the error on through a structured return value (a dict field, a result tuple) is therefore reported as a GEKIPPT regression even when the error is visible to the caller. List such cases — verified by you — in `ACCEPTED_GEKIPPT` in `build_dep_map_config.py` as `(module_relpath, function, exception_type, reason)`. An accepted entry stays in `dep_map_delta.md`, in its own section together with your reason, but no longer counts in the regression number of the summary or in the stdout line. The default is an empty list.
 
 ## Known limitations
 

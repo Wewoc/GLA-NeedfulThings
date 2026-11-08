@@ -5,7 +5,7 @@ if "%MENU_DIR:~-1%"=="\" set "MENU_DIR=%MENU_DIR:~0,-1%"
 set "TARGET=%~1"
 
 echo.
-echo Generate folder tree -- needfull things
+echo Generate folder tree -- Needful Things
 echo Folder: %TARGET%
 echo.
 

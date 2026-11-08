@@ -223,7 +223,7 @@ run:
 |---|---|---|
 | Trigger | A specific change is being made | Periodic, or before a major milestone |
 | Scope | The files touched by this change | The system as a whole, or a defined subsystem |
-| Output | An anchor/diff, applied by the human | A report; no code touched |
+| Output | An anchor/diff (applied by the human in chat mode, recorded after a direct edit in CLI mode) | A report; no code touched |
 | Comparability | N/A — each change is its own event | Explicitly designed to compare across runs |
 | Follow-up | Tests, then done | Human reviews, *then* decides what becomes a build order |
 
