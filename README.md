@@ -28,12 +28,14 @@ The companion pattern for standing back from any single change and assessing a s
 
 → [Read it](AUDIT_METHODOLOGY.md)
 
-`SKILL.md` — Portable Skill (chat)
-A toolchain-agnostic distillation of both documents above into a loadable Claude Skill for chat sessions without file access — the same process (Evaluate ≠ Decide, staged Assess/Analyze/Build, read-before-write, Single Owner, silent-failure lens, diff-vs-full delivery, review gate) without any reference to this repo's specific scripts, so it can be dropped into any project and defers to that project's own stricter instructions where they exist.
+### `SKILL.md` — Portable Skill (chat)
+A toolchain-agnostic distillation of both documents above into a loadable Claude Skill for chat sessions without file access — the same process (Evaluate ≠ Decide, staged Assess/Analyze/Build, read-before-write, Single Owner, silent-failure lens, diff-vs-full delivery, a stated success criterion, review gate with a green/yellow/red traffic light) without any reference to this repo's specific scripts, so it can be dropped into any project and defers to that project's own stricter instructions where they exist.
+
 → [Read it](SKILL.md)
 
-`disciplined-ai-engineering-cli/SKILL.md` — Portable Skill (Claude Code / CLI)
-The counterpart for Claude Code and other CLI agents with direct file access, distilled from `METHODOLOGY.md` §4.2 and §5.2: confirmation per step instead of "the human applies", a repository-wide cross-check before every edit, and a change record plus journal afterwards. Copy the folder to `~/.claude/skills/` (or `.claude/skills/` inside a project). It defers to the project's own `CLAUDE.md` where that is stricter. If both skills are installed, this one applies whenever the assistant can edit files.
+### `disciplined-ai-engineering-cli/SKILL.md` — Portable Skill (Claude Code / CLI)
+The counterpart for Claude Code and other CLI agents with direct file access, distilled from `METHODOLOGY.md` §4.2 and §5.2: confirmation per step instead of "the human applies", a repository-wide cross-check before every edit, a stated success criterion per step, a traffic-light verdict (green only with named proof), and a change record plus journal afterwards. Copy the folder to `~/.claude/skills/` (or `.claude/skills/` inside a project). It defers to the project's own `CLAUDE.md` where that is stricter. If both skills are installed, this one applies whenever the assistant can edit files.
+
 → [Read it](disciplined-ai-engineering-cli/SKILL.md)
 
 ---

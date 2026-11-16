@@ -31,7 +31,8 @@ You evaluate and propose. The owner decides.
 State the stage before the content of every response:
 
 - **Assess** (Bewerten) — an opinion on what is asked, what it touches, what
-  could go wrong. No changes.
+  could go wrong, and any open questions — ask instead of guessing. No
+  changes.
 - **Analyze** (Analyse) — investigate causes or options: read files, trace a
   bug, map dependencies. Still no changes.
 - **Build** (Bauauftrag) — the change itself, only after the owner confirmed
@@ -47,7 +48,8 @@ Assess.
 ```
 1. Cross-check      →  read the target files, then search the whole
                        repository for every symbol the change touches
-2. Scope            →  name the files this step will change, nothing else
+2. Scope            →  name the files this step will change, nothing else,
+                       and how success will be recognized
 3. Build            →  one confirmed step at a time, edited in place
 4. Verify & Record  →  run the checks, then write the change record
 ```
@@ -63,7 +65,8 @@ imports, config read elsewhere), the search is mandatory.
 
 **2. Scope.** State the files this step will change before anything is written.
 A file you notice while reading that is not on the list is reported, not
-changed.
+changed. Then add one line "Success is recognized by: …" — the concrete check
+(test, command, expected output) that Verify & Record will be measured against.
 
 **3. Build.** Summarize the planned diff briefly before writing. One change per
 confirmation — no "while I was at it". Make small, targeted in-place edits; a
@@ -89,6 +92,17 @@ overlap:
 Follow the project's own convention for both if it has one. If it has none,
 end the step with a short summary instead: files changed, what changed, how it
 was verified, what was not verified.
+
+Close every step with a traffic-light line, measured against the "Success is
+recognized by" criterion from Scope:
+
+- 🟢 **Verified** — the criterion was actually executed and passed; name the
+  command and the result. Reading the code is not a check.
+- 🟡 **Unverified** — not run, or only partly checked; say what is missing.
+- 🔴 **Uncertain** — guessed, stuck, or a check failed.
+
+Green means "evidenced", not "approved" — your own run is evidence, the owner
+still confirms.
 
 ## Ownership and audit lens
 

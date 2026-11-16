@@ -84,6 +84,27 @@ content of that file in this session — never reconstruct it from memory or
 from an earlier version. This sounds obvious; it is also the single most
 common source of broken anchors and phantom diffs in practice.
 
+### Success criterion first, traffic light last
+
+Before a change is built, the success criterion is stated: what will show
+that it worked (a test, a command, an expected output or behavior).
+Open questions are asked at that point, not guessed at.
+
+Every response that proposes or makes a change then ends with one
+traffic-light line, measured against that criterion:
+
+- 🟢 **Verified** — the criterion was actually run and passed, and the proof
+  is named (command and result). In a chat without file access the model
+  cannot run anything; there green requires evidence on the table, such as
+  output the human pasted. The model's own reading of a diff is not proof.
+- 🟡 **Unverified** — should work, but was not run or only partly checked;
+  the line says what is missing. This is the normal state of a chat
+  proposal until the human has applied it and reported back.
+- 🔴 **Uncertain** — guessed, stuck, or a check failed.
+
+Green means *evidenced*, not *approved*: the human still decides (see
+Evaluate ≠ Decide).
+
 ---
 
 ## 3. Hard rules — process
@@ -96,6 +117,8 @@ technical debt to pay down later, it's a defect to fix now.
   symbol involved, §4.2). Know what a change touches before touching it.
 - No anchor/diff written without first reading the target file's current
   state.
+- No build instruction without a stated success criterion, and no change
+  reported as green without named proof (§2).
 - No release without a clean lint pass and a green test suite.
 - Full-file delivery only above a change threshold, configurable per project
   (this repo defaults to 30%); everything below that is a targeted
@@ -131,11 +154,13 @@ come from.
 1. Dependency Scan   →  what does the target area currently touch,
                          and what touches it?
 2. Scope Freeze      →  lock the exact set of files this session is
-                         allowed to change, based on the scan
+                         allowed to change, based on the scan, and state
+                         how success will be recognized
 3. Build              →  AI proposes changes as anchors/diffs against
                          the frozen scope only
 4. Review Gate        →  human applies, tests run, AI and/or external
-                         models review before it's considered done
+                         models review before it's considered done;
+                         the response ends with a traffic light
 ```
 
 **1. Dependency Scan.** Before any change, run a scan of the target area to
@@ -148,7 +173,8 @@ more than is actually relevant.
 explicit, closed list of files this session is allowed to touch. In this
 repo: `scope_snapshot/`. No build instruction is issued until this snapshot
 exists. This is the step that prevents an AI assistant from "helpfully"
-wandering into adjacent files.
+wandering into adjacent files. The snapshot is accompanied by the success
+criterion (§2): the check the Review Gate will be measured against.
 
 **3. Build.** The AI proposes changes strictly within the frozen scope, as
 anchor/diff blocks (see §5.1) — never as a full rewrite unless justified by
@@ -160,6 +186,9 @@ unrelated changes into one delivery.
 applies its own changes directly. Tests run after each meaningful change,
 not just at the end. For cross-cutting refactors or anything security-
 relevant, an additional multi-model review (§6) is mandatory, not optional.
+The response closes with the traffic-light line of §2 against the success
+criterion from the Scope Freeze; in a chat, green requires evidence the human
+has put on the table, otherwise the state is 🟡.
 
 This is deliberately more overhead than "just ask the AI to fix it." That
 overhead is the point — it's what keeps a fast-moving AI-assisted codebase
@@ -180,6 +209,8 @@ Request: *"Add timeout support to the API client."*
    → config.py
    (request_handler.py excluded: only reads response objects, no timeout
     logic needed there — confirmed during scan review)
+   → success is recognized by: the existing test suite stays green and a
+     call with a short timeout raises the timeout error
 
 3. Build
    → anchor delivered for api_client.py: add `timeout` param, wire into
@@ -194,6 +225,8 @@ Request: *"Add timeout support to the API client."*
    → test suite run: green
    → single-file, non-critical change → no multi-model review required
      (see §6 for when it would be)
+   → 🟢 verified: test output pasted by the human, timeout case included
+     (until that output is on the table, the state is 🟡)
 ```
 
 The value isn't the timeout feature itself — it's that `logging_utils.py`
@@ -211,9 +244,11 @@ human's gate moves from *applying* a change to *confirming* it.
 ```
 1. Cross-check      →  read the target files, then search the whole
                        repository for every symbol the change touches
-2. Scope            →  name the files this step will change, nothing else
+2. Scope            →  name the files this step will change, nothing else,
+                       and how success will be recognized
 3. Build            →  one confirmed step at a time, edited in place
-4. Verify & Record  →  run the checks, then write the change record
+4. Verify & Record  →  run the checks, write the change record, close
+                       with a traffic light
 ```
 
 **1. Cross-check.** Read the file first, in this session — directly from
@@ -230,7 +265,8 @@ versions. Reading and searching never need confirmation.
 **2. Scope.** The files this step will change are stated before anything
 is written. A file the model notices while reading that is not on the list
 is reported, not changed — the same discipline as in the chat example,
-without a separate snapshot.
+without a separate snapshot. The step also states its success criterion
+(§2): the concrete check that Verify & Record will be measured against.
 
 **3. Build.** The gate is a confirmation per step: no write, edit, or
 state-changing command until the human has confirmed that specific step,
@@ -258,6 +294,11 @@ What is in one is not repeated in the other (the journal names the anchor
 file, nothing more). A step without a journal entry, or a changed file
 without a change record, cannot be reconstructed by a later session.
 
+Every step closes with the traffic-light line of §2, measured against the
+success criterion from Scope. Here the model can run the check itself, so
+green is reachable: it names the command and the result. Its own run is
+evidence, not approval — the human still confirms.
+
 #### Worked example (CLI mode)
 
 Request: *"Add timeout support to the API client."*
@@ -272,6 +313,8 @@ Request: *"Add timeout support to the API client."*
 
 2. Scope
    → api_client.py, config.py
+   → success is recognized by: the existing test suite stays green and a
+     call with a short timeout raises the timeout error
 
 3. Build
    → plan summarized, human confirms this step
@@ -285,6 +328,8 @@ Request: *"Add timeout support to the API client."*
    → anchor record for both files, written from the real state and
      checked read-only
    → journal entry: reason, cross-check result, the retry-logic gap
+   → 🟢 verified: test suite and the short-timeout call both run,
+     result reported with the command
 ```
 
 The result matches the chat example — `logging_utils.py` and the unrelated

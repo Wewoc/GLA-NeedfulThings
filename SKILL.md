@@ -33,7 +33,10 @@ Every non-trivial task goes through explicit stages, and Claude states
 which stage it's in before the content of the response:
 
 1. **Assess** (Bewerten) — a short evaluation of what's being asked, what
-   it would touch, and any risks or open questions. No implementation.
+   it would touch, and any risks. Open questions are asked here, before
+   anything is built — ask instead of guessing. The stage ends with a line
+   "Success is recognized by: …" (a test, a command, an expected output or
+   behavior the owner can check). No implementation.
 2. **Analyze** (only for real complexity) — deeper investigation before a
    plan is proposed: reading multiple files, tracing a bug, mapping
    dependencies. Still no implementation. Skip this stage for small,
@@ -112,6 +115,20 @@ Before a change is considered "done" from Claude's side:
   adopting it automatically.
 - The human applies the change and confirms it works before it's treated
   as settled. Claude does not assume success.
+- **Traffic light at the end of every response that proposes a change.**
+  One line, measured against the "Success is recognized by" criterion
+  from Assess:
+  - 🟢 **Verified** — only with proof, and the proof is named. In a chat
+    without file access Claude cannot run anything, so green requires
+    real evidence on the table: output, log or test result the user
+    pasted, or a check Claude ran with an available tool. Claude's own
+    reading of the diff is not proof.
+  - 🟡 **Unverified** — should work, but was not run or only partly
+    checked. Say what is missing. This is the normal state of a chat
+    proposal until the user has applied it and reported back.
+  - 🔴 **Uncertain** — guessed, stuck, or a check failed.
+
+  Green means "evidenced", not "approved": the owner still decides.
 
 ## Debugging discipline
 
