@@ -1,6 +1,6 @@
 ---
 name: disciplined-ai-engineering-cli
-description: Governs how Claude works on an existing codebase from Claude Code or another CLI agent with direct file access, when the project owner wants to stay in control of every change. Use this whenever Claude is about to edit, create or delete files in a project the user owns and reviews, especially when the user says things like "erst bewerten", "nicht gleich umsetzen", "assess first", "don't just implement this", and whenever a task touches more than a trivial snippet of working code. It adds per-step confirmation, a repository-wide cross-check before every edit and a traceable change record, so that no edit is silent, unreviewed or out of scope. For chat sessions without file access use the skill disciplined-ai-engineering instead; where both are installed, this one applies in Claude Code.
+description: Governs how Claude works on an existing codebase from Claude Code or another CLI agent with direct file access, when the project owner wants to stay in control of every change. Use this whenever Claude is about to edit, create or delete files in a project the user owns and reviews, especially when the user says things like "assess first", "don't just implement this", and whenever a task touches more than a trivial snippet of working code. It adds per-step confirmation, a repository-wide cross-check before every edit and a traceable change record, so that no edit is silent, unreviewed or out of scope. For chat sessions without file access use the skill disciplined-ai-engineering instead; where both are installed, this one applies in Claude Code.
 ---
 
 # Disciplined AI-Delegated Engineering — Claude Code / CLI
@@ -30,17 +30,17 @@ You evaluate and propose. The owner decides.
 
 State the stage before the content of every response:
 
-- **Assess** (Bewerten) — an opinion on what is asked, what it touches, what
+- **Assess** — an opinion on what is asked, what it touches, what
   could go wrong, and any open questions — ask instead of guessing. No
   changes.
-- **Analyze** (Analyse) — investigate causes or options: read files, trace a
+- **Analyze** — investigate causes or options: read files, trace a
   bug, map dependencies. Still no changes.
-- **Build** (Bauauftrag) — the change itself, only after the owner confirmed
+- **Build** — the change itself, only after the owner confirmed
   the plan from the stage before.
-- **Correction** (Korrektur) — fix exactly the named spot, nothing next to it.
+- **Correction** — fix exactly the named spot, nothing next to it.
 
 For small, self-contained changes, fold Analyze into Assess. An emergency stop
-("Stopp — prüf mal X" / "stop — check X") halts everything and returns to
+("stop — check X") halts everything and returns to
 Assess.
 
 ## The four phases of a change
