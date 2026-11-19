@@ -67,6 +67,12 @@ imports, config read elsewhere), the search is mandatory.
 A file you notice while reading that is not on the list is reported, not
 changed. Then add one line "Success is recognized by: …" — the concrete check
 (test, command, expected output) that Verify & Record will be measured against.
+Add a second line "Critical: yes/no, because …". A change is critical if it
+is security-relevant, ripples into other files (shared state, imports, config
+read elsewhere) or is hard to reverse (deletion, migration, data loss) — never
+judged by the number of files. The owner confirms or overrides the
+classification together with the plan and can order an independent check at
+any time.
 
 **3. Build.** Summarize the planned diff briefly before writing. One change per
 confirmation — no "while I was at it". Make small, targeted in-place edits; a
@@ -103,6 +109,37 @@ recognized by" criterion from Scope:
 
 Green means "evidenced", not "approved" — your own run is evidence, the owner
 still confirms.
+
+## Independent verification (critical changes only)
+
+For a change marked critical in Scope, the traffic light is set by an
+independent verifier, not by you: a subagent that did not build the change.
+
+- **Briefing.** Use the `verifier` agent (template: `agents/verifier.md`;
+  without it, a general-purpose subagent with the same rules). Give it only the
+  success criterion, the file list from Scope and the actual file state or diff
+  — not your reasoning.
+- **Return.** Traffic light, reason and named evidence (command and result).
+  🟢 needs executed evidence, as above.
+- **Your light never exceeds the verifier's.** You may lower it, never raise it.
+  🟢 still means "evidenced", not "approved": the owner confirms.
+- **At most two runs per build step.**
+
+      Build → run 1 → 🟢 → report to the owner
+                    → 🟡/🔴 → Correction (owner-confirmed) → run 2 → 🟢 → report
+                                                                   → 🟡/🔴 → STOP → Analyze
+
+  🟡 counts as not passed. Exception: if the verifier reports 🟡 because the
+  criterion cannot be executed at all (no test, no environment), stop at once —
+  a second run would not change that.
+- **On stop**, return to Analyze and hand over: what was built, both verifier
+  findings with reasons, and your view whether the approach or the
+  implementation failed. Do not revert on your own — a revert is a state change
+  and needs confirmation; state the current file state instead. The run counter
+  belongs to one build step; a new confirmed plan starts at zero.
+- Record the verdicts and the run count in the change journal.
+- The verifier has Bash to run the check, so "changes nothing" is an
+  instruction, not a tool-enforced gate.
 
 ## Ownership and audit lens
 
