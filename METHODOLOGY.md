@@ -119,6 +119,9 @@ technical debt to pay down later, it's a defect to fix now.
   state.
 - No build instruction without a stated success criterion, and no change
   reported as green without named proof (§2).
+- No critical change built without a plan check, and none reported green
+  without independent verification (CLI mode, §4.2) — unless the human
+  explicitly overrides the classification.
 - No release without a clean lint pass and a green test suite.
 - Full-file delivery only above a change threshold, configurable per project
   (this repo defaults to 30%); everything below that is a targeted
@@ -266,7 +269,9 @@ versions. Reading and searching never need confirmation.
 is written. A file the model notices while reading that is not on the list
 is reported, not changed — the same discipline as in the chat example,
 without a separate snapshot. The step also states its success criterion
-(§2): the concrete check that Verify & Record will be measured against.
+(§2): the concrete check that Verify & Record will be measured against. It
+also states whether the change is critical (see *Independent review of
+critical changes* below).
 
 **3. Build.** The gate is a confirmation per step: no write, edit, or
 state-changing command until the human has confirmed that specific step,
@@ -298,6 +303,29 @@ Every step closes with the traffic-light line of §2, measured against the
 success criterion from Scope. Here the model can run the check itself, so
 green is reachable: it names the command and the result. Its own run is
 evidence, not approval — the human still confirms.
+
+**Independent review of critical changes.** Scope carries a line "Critical:
+yes/no, because …". Critical means security-relevant, rippling into other
+files, or hard to reverse — never judged by the number of files. The human
+confirms or overrides the classification together with the plan. For a
+critical change an independent reviewer steps in twice:
+
+- *Before Build*, a plan reviewer — a read-only subagent that did not write
+  the plan — checks it once. It redoes the cross-check, tests scope, success
+  criterion and the criticality call, and returns 👍 sound, 🔧 rework or
+  👎 not viable, with reasons. One run, no loop. These symbols are deliberately
+  not the traffic light, which belongs after Build.
+- *After Build*, a verifier — a subagent that did not build the change — runs
+  the success criterion and sets the traffic light with named proof. The
+  builder may lower that light, never raise it. At most two runs per step: a
+  first non-green verdict leads to one confirmed correction and a second run.
+  A second non-green verdict — or a first one saying the criterion cannot be
+  run at all — stops the step and returns to Analyze, with no automatic
+  revert. The point is a hard exit when a dead end shows, not a loop.
+
+Both reviewers deliver information, not approval: Evaluate ≠ Decide holds.
+The agent templates ship with the CLI skill
+(`disciplined-ai-engineering-cli/agents/`).
 
 #### Worked example (CLI mode)
 
@@ -426,6 +454,9 @@ independent review from more than one AI model is mandatory, not optional.
 The intersection of findings across models is treated as high-priority
 signal — three or four independent models flagging the same issue is a much
 stronger signal than one model's opinion, however confident it sounds.
+In CLI mode, the plan check and independent verification of §4.2 are the
+baseline for critical changes. Subagents give independence of context, not of
+model, so the review below stays the stronger gate and goes on top.
 
 Two ways to run this:
 

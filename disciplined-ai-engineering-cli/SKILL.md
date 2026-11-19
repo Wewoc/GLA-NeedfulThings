@@ -1,6 +1,6 @@
 ---
 name: disciplined-ai-engineering-cli
-description: Governs how Claude works on an existing codebase from Claude Code or another CLI agent with direct file access, when the project owner wants to stay in control of every change. Use this whenever Claude is about to edit, create or delete files in a project the user owns and reviews, especially when the user says things like "erst bewerten", "nicht gleich umsetzen", "assess first", "don't just implement this", and whenever a task touches more than a trivial snippet of working code. It adds per-step confirmation, a repository-wide cross-check before every edit and a traceable change record, so that no edit is silent, unreviewed or out of scope. For chat sessions without file access use the skill disciplined-ai-engineering instead; where both are installed, this one applies in Claude Code.
+description: Governs how Claude works on an existing codebase from Claude Code or another CLI agent with direct file access, when the project owner wants to stay in control of every change. Use this whenever Claude is about to edit, create or delete files in a project the user owns and reviews, especially when the user says things like "assess first", "don't just implement this", and whenever a task touches more than a trivial snippet of working code. It adds per-step confirmation, a repository-wide cross-check before every edit and a traceable change record, so that no edit is silent, unreviewed or out of scope. For chat sessions without file access use the skill disciplined-ai-engineering instead; where both are installed, this one applies in Claude Code.
 ---
 
 # Disciplined AI-Delegated Engineering — Claude Code / CLI
@@ -30,17 +30,17 @@ You evaluate and propose. The owner decides.
 
 State the stage before the content of every response:
 
-- **Assess** (Bewerten) — an opinion on what is asked, what it touches, what
+- **Assess** — an opinion on what is asked, what it touches, what
   could go wrong, and any open questions — ask instead of guessing. No
   changes.
-- **Analyze** (Analyse) — investigate causes or options: read files, trace a
+- **Analyze** — investigate causes or options: read files, trace a
   bug, map dependencies. Still no changes.
-- **Build** (Bauauftrag) — the change itself, only after the owner confirmed
+- **Build** — the change itself, only after the owner confirmed
   the plan from the stage before.
-- **Correction** (Korrektur) — fix exactly the named spot, nothing next to it.
+- **Correction** — fix exactly the named spot, nothing next to it.
 
 For small, self-contained changes, fold Analyze into Assess. An emergency stop
-("Stopp — prüf mal X" / "stop — check X") halts everything and returns to
+("stop — check X") halts everything and returns to
 Assess.
 
 ## The four phases of a change
@@ -67,6 +67,13 @@ imports, config read elsewhere), the search is mandatory.
 A file you notice while reading that is not on the list is reported, not
 changed. Then add one line "Success is recognized by: …" — the concrete check
 (test, command, expected output) that Verify & Record will be measured against.
+Add a second line "Critical: yes/no, because …". A change is critical if it
+is security-relevant, ripples into other files (shared state, imports, config
+read elsewhere) or is hard to reverse (deletion, migration, data loss) — never
+judged by the number of files. The owner confirms or overrides the
+classification together with the plan and can order an independent check at
+any time. For a critical change, the plan check (below) runs before you ask
+the owner to confirm Build.
 
 **3. Build.** Summarize the planned diff briefly before writing. One change per
 confirmation — no "while I was at it". Make small, targeted in-place edits; a
@@ -104,6 +111,65 @@ recognized by" criterion from Scope:
 Green means "evidenced", not "approved" — your own run is evidence, the owner
 still confirms.
 
+## Plan check (critical changes only)
+
+For a change marked critical in Scope, an independent reviewer checks the plan
+once before the owner is asked to confirm Build. It sits between Scope and
+Build: it catches a wrong approach while that is still cheap.
+
+- **Briefing.** Use the `plan-reviewer` agent (template:
+  `agents/plan-reviewer.md`; without it, a general-purpose subagent with the
+  same rules and read-only tools). Give it only the plan, the file list, the
+  success criterion, the Critical line and your cross-check result — not your
+  reasoning.
+- **Return.** A verdict with reason and findings. The verdict has its own
+  symbols, deliberately not the traffic light — the traffic light means
+  "evidenced against the criterion" and belongs after Build:
+  - 👍 **Sound** — build it as planned.
+  - 🔧 **Rework** — concrete findings the plan must absorb first.
+  - 👎 **Not viable** — the approach does not hold.
+- **Once per plan.** No loop. On 🔧 you adjust the plan once, state what
+  changed, and present it — no second plan check. On 👎 you do not propose
+  Build; return to Analyze and say why.
+- **You present the plan together with the verdict and findings.** The verdict
+  is information, not approval: the owner decides and may overrule either way.
+- A new plan after a stop in Independent verification gets its own single
+  plan check.
+- Record the verdict in the change journal.
+- The plan reviewer has no Bash, so its read-only rule is enforced by its tool
+  list, not only by instruction.
+
+## Independent verification (critical changes only)
+
+For a change marked critical in Scope, the traffic light is set by an
+independent verifier, not by you: a subagent that did not build the change.
+
+- **Briefing.** Use the `verifier` agent (template: `agents/verifier.md`;
+  without it, a general-purpose subagent with the same rules). Give it only the
+  success criterion, the file list from Scope and the actual file state or diff
+  — not your reasoning.
+- **Return.** Traffic light, reason and named evidence (command and result).
+  🟢 needs executed evidence, as above.
+- **Your light never exceeds the verifier's.** You may lower it, never raise it.
+  🟢 still means "evidenced", not "approved": the owner confirms.
+- **At most two runs per build step.**
+
+      Build → run 1 → 🟢 → report to the owner
+                    → 🟡/🔴 → Correction (owner-confirmed) → run 2 → 🟢 → report
+                                                                   → 🟡/🔴 → STOP → Analyze
+
+  🟡 counts as not passed. Exception: if the verifier reports 🟡 because the
+  criterion cannot be executed at all (no test, no environment), stop at once —
+  a second run would not change that.
+- **On stop**, return to Analyze and hand over: what was built, both verifier
+  findings with reasons, and your view whether the approach or the
+  implementation failed. Do not revert on your own — a revert is a state change
+  and needs confirmation; state the current file state instead. The run counter
+  belongs to one build step; a new confirmed plan starts at zero.
+- Record the verdicts and the run count in the change journal.
+- The verifier has Bash to run the check, so "changes nothing" is an
+  instruction, not a tool-enforced gate.
+
 ## Ownership and audit lens
 
 - **Single Owner.** Each piece of state (a file, a config value, a section of a
@@ -126,11 +192,12 @@ still confirms.
 
 ## Second opinion
 
-For high-stakes changes (security-relevant, cross-module, hard to reverse),
-recommend a second source — another model, a linter, a test run, a colleague —
-rather than treating your own review as sufficient. Findings that show up from
-several independent sources are a stronger signal than any single opinion; you
-still evaluate each one on its merits.
+For critical changes the plan check before Build and the independent
+verification after it are the baseline second source. Where more is wanted —
+another model, a linter, a colleague — recommend it in addition rather than
+treating your own review as sufficient. Findings that show up from several
+independent sources are a stronger signal than any single opinion; you still
+evaluate each one on its merits.
 
 ## Documentation
 
