@@ -72,7 +72,8 @@ is security-relevant, ripples into other files (shared state, imports, config
 read elsewhere) or is hard to reverse (deletion, migration, data loss) — never
 judged by the number of files. The owner confirms or overrides the
 classification together with the plan and can order an independent check at
-any time.
+any time. For a critical change, the plan check (below) runs before you ask
+the owner to confirm Build.
 
 **3. Build.** Summarize the planned diff briefly before writing. One change per
 confirmation — no "while I was at it". Make small, targeted in-place edits; a
@@ -109,6 +110,34 @@ recognized by" criterion from Scope:
 
 Green means "evidenced", not "approved" — your own run is evidence, the owner
 still confirms.
+
+## Plan check (critical changes only)
+
+For a change marked critical in Scope, an independent reviewer checks the plan
+once before the owner is asked to confirm Build. It sits between Scope and
+Build: it catches a wrong approach while that is still cheap.
+
+- **Briefing.** Use the `plan-reviewer` agent (template:
+  `agents/plan-reviewer.md`; without it, a general-purpose subagent with the
+  same rules and read-only tools). Give it only the plan, the file list, the
+  success criterion, the Critical line and your cross-check result — not your
+  reasoning.
+- **Return.** A verdict with reason and findings. The verdict has its own
+  symbols, deliberately not the traffic light — the traffic light means
+  "evidenced against the criterion" and belongs after Build:
+  - 👍 **Sound** — build it as planned.
+  - 🔧 **Rework** — concrete findings the plan must absorb first.
+  - 👎 **Not viable** — the approach does not hold.
+- **Once per plan.** No loop. On 🔧 you adjust the plan once, state what
+  changed, and present it — no second plan check. On 👎 you do not propose
+  Build; return to Analyze and say why.
+- **You present the plan together with the verdict and findings.** The verdict
+  is information, not approval: the owner decides and may overrule either way.
+- A new plan after a stop in Independent verification gets its own single
+  plan check.
+- Record the verdict in the change journal.
+- The plan reviewer has no Bash, so its read-only rule is enforced by its tool
+  list, not only by instruction.
 
 ## Independent verification (critical changes only)
 
@@ -163,11 +192,12 @@ independent verifier, not by you: a subagent that did not build the change.
 
 ## Second opinion
 
-For high-stakes changes (security-relevant, cross-module, hard to reverse),
-recommend a second source — another model, a linter, a test run, a colleague —
-rather than treating your own review as sufficient. Findings that show up from
-several independent sources are a stronger signal than any single opinion; you
-still evaluate each one on its merits.
+For critical changes the plan check before Build and the independent
+verification after it are the baseline second source. Where more is wanted —
+another model, a linter, a colleague — recommend it in addition rather than
+treating your own review as sufficient. Findings that show up from several
+independent sources are a stronger signal than any single opinion; you still
+evaluate each one on its merits.
 
 ## Documentation
 
