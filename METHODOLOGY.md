@@ -316,7 +316,8 @@ critical change an independent reviewer steps in twice:
   👎 not viable, with reasons. One run, no loop. These symbols are deliberately
   not the traffic light, which belongs after Build.
 - *After Build*, a verifier — a subagent that did not build the change — runs
-  the success criterion and sets the traffic light with named proof. The
+  the success criterion and sets the traffic light with named proof. It also
+  receives the plan check's findings and confirms they were absorbed. The
   builder may lower that light, never raise it. At most two runs per step: a
   first non-green verdict leads to one confirmed correction and a second run.
   A second non-green verdict — or a first one saying the criterion cannot be

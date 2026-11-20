@@ -69,8 +69,9 @@ changed. Then add one line "Success is recognized by: …" — the concrete chec
 (test, command, expected output) that Verify & Record will be measured against.
 Add a second line "Critical: yes/no, because …". A change is critical if it
 is security-relevant, ripples into other files (shared state, imports, config
-read elsewhere) or is hard to reverse (deletion, migration, data loss) — never
-judged by the number of files. The owner confirms or overrides the
+read elsewhere) or is hard to reverse (deletion, migration, data loss, or any
+state outside version control, which git cannot restore) — never judged by the
+number of files. The owner confirms or overrides the
 classification together with the plan and can order an independent check at
 any time. For a critical change, the plan check (below) runs before you ask
 the owner to confirm Build.
@@ -119,18 +120,20 @@ Build: it catches a wrong approach while that is still cheap.
 
 - **Briefing.** Use the `plan-reviewer` agent (template:
   `agents/plan-reviewer.md`; without it, a general-purpose subagent with the
-  same rules and read-only tools). Give it only the plan, the file list, the
-  success criterion, the Critical line and your cross-check result — not your
-  reasoning.
+  same rules and read-only tools). Give it only the plan, the file list (files
+  the plan creates are marked "new"), the success criterion, the Critical line
+  and your cross-check result — not your reasoning.
 - **Return.** A verdict with reason and findings. The verdict has its own
   symbols, deliberately not the traffic light — the traffic light means
   "evidenced against the criterion" and belongs after Build:
   - 👍 **Sound** — build it as planned.
   - 🔧 **Rework** — concrete findings the plan must absorb first.
   - 👎 **Not viable** — the approach does not hold.
-- **Once per plan.** No loop. On 🔧 you adjust the plan once, state what
-  changed, and present it — no second plan check. On 👎 you do not propose
-  Build; return to Analyze and say why.
+- **Once per plan.** No loop. A `none` verdict (incomplete briefing) is not a
+  run: fix the briefing and ask again; if it returns `none` twice, stop and
+  tell the owner. On 🔧 you adjust the plan once, state what changed, and
+  present it — no second plan check. On 👎 you do not propose Build; return to
+  Analyze and say why.
 - **You present the plan together with the verdict and findings.** The verdict
   is information, not approval: the owner decides and may overrule either way.
 - A new plan after a stop in Independent verification gets its own single
@@ -146,10 +149,12 @@ independent verifier, not by you: a subagent that did not build the change.
 
 - **Briefing.** Use the `verifier` agent (template: `agents/verifier.md`;
   without it, a general-purpose subagent with the same rules). Give it only the
-  success criterion, the file list from Scope and the actual file state or diff
-  — not your reasoning.
+  success criterion, the file list from Scope, the actual file state, diff or
+  change record, the pre-change result of the criterion if you have one, and
+  the findings of the plan check if there were any, with the owner's decision
+  on each — not your reasoning.
 - **Return.** Traffic light, reason and named evidence (command and result).
-  🟢 needs executed evidence, as above.
+  🟢 needs executed evidence and no blocking finding, as above.
 - **Your light never exceeds the verifier's.** You may lower it, never raise it.
   🟢 still means "evidenced", not "approved": the owner confirms.
 - **At most two runs per build step.**
@@ -160,7 +165,9 @@ independent verifier, not by you: a subagent that did not build the change.
 
   🟡 counts as not passed. Exception: if the verifier reports 🟡 because the
   criterion cannot be executed at all (no test, no environment), stop at once —
-  a second run would not change that.
+  a second run would not change that. A `none` verdict (incomplete briefing) is
+  not a run: fix the briefing and run again; if it returns `none` twice, stop
+  and tell the owner.
 - **On stop**, return to Analyze and hand over: what was built, both verifier
   findings with reasons, and your view whether the approach or the
   implementation failed. Do not revert on your own — a revert is a state change
@@ -168,7 +175,13 @@ independent verifier, not by you: a subagent that did not build the change.
   belongs to one build step; a new confirmed plan starts at zero.
 - Record the verdicts and the run count in the change journal.
 - The verifier has Bash to run the check, so "changes nothing" is an
-  instruction, not a tool-enforced gate.
+  instruction, not a tool-enforced gate. Its Side effects field (git status
+  before and after) makes violations visible — but git status shows neither
+  ignored files nor anything outside the repo, so "none visible" is not "none".
+
+Both agent files end in a Project adaptation block. Project-specific rules,
+paths to read or protect, and safe ways to run a check go there, in the
+project's own copy under `.claude/agents/` — not into this skill.
 
 ## Ownership and audit lens
 
