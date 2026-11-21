@@ -112,6 +112,32 @@ recognized by" criterion from Scope:
 Green means "evidenced", not "approved" — your own run is evidence, the owner
 still confirms.
 
+## Concept check (owner-ordered)
+
+When the owner has finished a concept or specification and asks for it to be
+checked, an independent reviewer audits it before any plan is written. It is
+never started on your own initiative and is not tied to "Critical": at concept
+stage there is no plan yet to classify. It works best on a finished concept.
+
+- **Briefing.** Use the `concept-reviewer` agent (template:
+  `agents/concept-reviewer.md`; without it, a general-purpose subagent with the
+  same rules and read-only tools). Give it the concept (text or path, with its
+  version or date if it has one) and the target area if the owner named one —
+  not your own assessment of it.
+- **Return.** A verdict with reason, findings and owner decisions. The symbols
+  are the plan check's: 👍 **Clear**, 🔧 **Clarify**, 👎 **Conflict**.
+- **At most two runs per concept.** The second run follows the owner's
+  revision and checks that the owner's resolutions hold. A `none` verdict
+  (incomplete briefing) is not a run; if it returns `none` twice, stop and
+  tell the owner.
+- **The concept changes only on the owner's instruction.** You present the
+  findings and the owner decisions; the owner answers, revises or overrules a
+  finding. The verdict is information, not approval. Do not start Assess or
+  Analyze on a 🔧 or 👎 concept without the owner's say-so.
+- Record the verdict and the owner's decisions in the change journal.
+- The concept reviewer has no Bash, so its read-only rule is enforced by its
+  tool list.
+
 ## Plan check (critical changes only)
 
 For a change marked critical in Scope, an independent reviewer checks the plan
@@ -179,7 +205,7 @@ independent verifier, not by you: a subagent that did not build the change.
   before and after) makes violations visible — but git status shows neither
   ignored files nor anything outside the repo, so "none visible" is not "none".
 
-Both agent files end in a Project adaptation block. Project-specific rules,
+All agent files end in a Project adaptation block. Project-specific rules,
 paths to read or protect, and safe ways to run a check go there, in the
 project's own copy under `.claude/agents/` — not into this skill.
 

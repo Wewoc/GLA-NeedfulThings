@@ -328,6 +328,13 @@ Both reviewers deliver information, not approval: Evaluate ≠ Decide holds.
 The agent templates ship with the CLI skill
 (`disciplined-ai-engineering-cli/agents/`).
 
+**Concept check (owner-ordered).** Before a plan exists, the owner can have a
+finished concept reviewed once or twice by a read-only reviewer that did not
+write it. It tests the concept's claims against the code, the project's
+invariants and its edge cases, and returns findings plus concrete decisions for
+the owner (👍 clear, 🔧 clarify, 👎 conflict). It never starts on its own and
+never edits the concept; the owner decides.
+
 #### Worked example (CLI mode)
 
 Request: *"Add timeout support to the API client."*
