@@ -209,6 +209,37 @@ All agent files end in a Project adaptation block. Project-specific rules,
 paths to read or protect, and safe ways to run a check go there, in the
 project's own copy under `.claude/agents/` — not into this skill.
 
+## Implementation audit (end of a build unit)
+
+At the end of a build unit and before the documentation round, an independent
+auditor checks the combined result once. It is not run per step. The project's
+own instructions say what counts as a unit and whether the audit is required
+before the documentation round; this skill defines only the mechanics. The
+auditor can block nothing: the gate "documentation round only after the audit
+report and the owner's confirmation" is a project rule.
+
+- **Briefing.** Use the `implementation-auditor` agent (template:
+  `agents/implementation-auditor.md`; without it, a general-purpose subagent
+  with the same rules). Give it the original requirement, the approved plan, the
+  diff or change record of the whole unit, the file list, the reported test
+  results as claims, and if you have them the project rules, earlier review
+  verdicts and known failure cases — not your own assessment.
+- **Return.** A checklist report with a traffic light. Earlier verdicts of the
+  plan reviewer and verifier are input, not proof.
+- **At most two runs per unit.** The second run follows the owner's answers to
+  the open questions and re-checks the UNKNOWN points. A `none` verdict
+  (incomplete briefing, or unit too large) is not a run; if it returns `none`
+  twice, stop and tell the owner. A unit that is still 🔴 after the second run
+  goes back to Analyze.
+- **You hand the owner the report.** Fixes go through the regular process
+  (Build, Correction), never from the auditor. The "Documents affected" list is
+  the input for the documentation round. The verdict is information, not
+  approval.
+- Record the verdict, the check-point statistics and the findings in the change
+  journal.
+- The auditor has Bash to run tests, so "changes nothing" is an instruction, not
+  a tool-enforced gate; its Side effects field makes violations visible.
+
 ## Ownership and audit lens
 
 - **Single Owner.** Each piece of state (a file, a config value, a section of a

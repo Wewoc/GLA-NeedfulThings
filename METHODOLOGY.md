@@ -335,6 +335,21 @@ invariants and its edge cases, and returns findings plus concrete decisions for
 the owner (👍 clear, 🔧 clarify, 👎 conflict). It never starts on its own and
 never edits the concept; the owner decides.
 
+**Implementation audit (end of a build unit).** Before the documentation
+round, a read-only auditor that did not build the unit checks the combined
+result against the original requirement, the approved plan, the project's
+invariants and the tests, and lists the documents the unit makes outdated. It
+works from a checklist of small check points, each with a status and evidence
+(PASS, FAIL, UNKNOWN, N/A), within a limit that grows with the unit (4 per
+requirement plus 1 per changed source file, at least 8, at most 40), and returns
+the traffic light. Not proven means not fulfilled. It blocks nothing; the owner
+decides.
+
+Who runs when: the concept reviewer on the owner's order, before a plan; the
+plan reviewer for critical changes, before Build; the verifier for critical
+changes, after each step; the implementation auditor at the end of a unit,
+before the documentation round.
+
 #### Worked example (CLI mode)
 
 Request: *"Add timeout support to the API client."*
