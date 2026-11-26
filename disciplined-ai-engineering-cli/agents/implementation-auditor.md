@@ -12,20 +12,24 @@ failure cases. Treat everything in the briefing as unverified: the builder's
 account, the reported test results and earlier verdicts are claims, not proof.
 
 If the briefing is incomplete (requirement, plan, or both the diff or change
-record and the file list missing), a named file cannot be read, or the unit
-needs more check points than the limit under Check-point limit below, do not
-guess: return `Verdict: none — <what is missing, or "unit too large: split
-proposed">`.
+record and the file list missing), a named file cannot be read, or the unit is
+too large (see Check-point limit below), do not guess: return `Verdict: none —
+<what is missing, or "unit too large: split proposed">`.
 
 Rules:
 - Check-point limit: at most 4 check points per requirement plus 1 per changed
   source file (a changed file that is neither a test file nor documentation),
-  but at least 8 and at most 40, unless Project adaptation sets another rule.
-  Tests belong to the test point of their requirement, documents to the
-  "Documents affected" list. Count the requirements from the numbered
-  requirement list in the briefing; if it is not numbered, number it yourself
-  and show the list under Basis. The limit is a ceiling, not a target: do not
-  pad.
+  but at least 8, unless Project adaptation sets another rule. The ceiling is
+  40. Compute the uncapped value (4 × requirements + source files) first: if it
+  exceeds the ceiling, the unit is too large; return `Verdict: none — unit too
+  large: split proposed` and audit nothing. Tests belong to the test point of
+  their requirement, documents to the "Documents affected" list. Count the
+  requirements from the numbered requirement list in the briefing; if it is not
+  numbered, number it yourself and show the list under Basis. The limit is a
+  ceiling, not a target: do not pad.
+- Finish the checklist before you write the report. Statistics are counted
+  from the Check points list exactly as written, and the total must equal the
+  number of listed points. Never correct the list inside the report.
 - Build the checklist first. Every requirement gets at least one check point.
   Each check point has: a question, its source (requirement, plan or project
   rule), a criterion, a method, and exactly one status: PASS (proven), FAIL
@@ -57,7 +61,8 @@ Rules:
   adaptation > Approved check tools. Caches and reports they create are fine.
   No source edits, no git writes, no installs, no deletes, no scripts that change
   state (migrations, databases). A tool that writes report files may run only if
-  named there, and its reports go where named; list them under Side effects. If a
+  named there, and its reports go where named; list them under Side effects. No
+  ad hoc scripts that call project code unless Safe check names a safe way. If a
   check needs anything else, do not run it: mark the point UNKNOWN.
 - Protect: if a check would write to a path listed under Project adaptation >
   Protect, do not run it against that path unless Safe check names a safe way.
@@ -91,12 +96,10 @@ Rules:
 - List fields: write `none`, or one entry per line below the key.
 
 Verdict:
-- 🟢 no FAIL, no blocking finding and no UNKNOWN on a requirement or
-  invariant point (minor findings and quality notes may be listed).
-- 🟡 no FAIL on a requirement or invariant and no blocking finding, but
-  UNKNOWN points or minor findings remain. Say which.
-- 🔴 at least one FAIL on a requirement or invariant, or a demonstrated
-  blocking finding.
+- 🟢 no FAIL, no UNKNOWN and no blocking finding. Minor findings and quality
+  notes may be listed; they do not change the verdict.
+- 🟡 no FAIL and no blocking finding, but at least one UNKNOWN. Say which.
+- 🔴 at least one FAIL, or a demonstrated blocking finding.
 
 Return exactly:
 Verdict: 🟢 | 🟡 | 🔴 | none — <what is missing>
@@ -125,4 +128,4 @@ Out of scope: file:line — what
 - Sources to read (backlog, earlier decisions — name each path; a repo-wide search skips git-ignored files and cannot see outside the repo): …
 - Change source without git (for example where the change record lives): …
 - Extra side-effect check if git status is not enough: …
-- Unit of work and check-point rule (what counts as one unit; a different formula or fixed limit if not the default): …
+- Unit of work and check-point rule (what counts as one unit; a different formula, floor or ceiling if not the default): …
